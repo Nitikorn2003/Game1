@@ -1,7 +1,8 @@
 # Releasing a game on Google Play
 
 These are the steps every Game1 game goes through. Each game's own `RELEASE.md`
-([Lodelings](../games/lodelings/RELEASE.md), [Quilt Nook](../games/quiltnook/RELEASE.md)) has
+([Lodelings](../games/lodelings/RELEASE.md), [Quilt Nook](../games/quiltnook/RELEASE.md),
+[Sky Jars](../games/skyjars/RELEASE.md)) has
 its answers: its name and category, what each edition sells, what to play through before an
 upload, and the facts for its content rating.
 Below, `<game>` is the game's folder name under `games/`.

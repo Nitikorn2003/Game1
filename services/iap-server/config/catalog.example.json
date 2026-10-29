@@ -148,6 +148,51 @@
           "entitlement": "fabric_chest"
         }
       ]
+    },
+    {
+      "gameId": "skyjars",
+      "packageName": "com.example.skyjars",
+      "products": [
+        {
+          "productId": "stardust_small",
+          "type": "consumable",
+          "grants": {
+            "stardust": 100
+          }
+        },
+        {
+          "productId": "stardust_medium",
+          "type": "consumable",
+          "grants": {
+            "stardust": 600
+          }
+        },
+        {
+          "productId": "stardust_large",
+          "type": "consumable",
+          "grants": {
+            "stardust": 1400
+          }
+        },
+        {
+          "productId": "night_kit",
+          "type": "non_consumable",
+          "grants": {
+            "stardust": 300
+          },
+          "entitlement": "night_kit"
+        },
+        {
+          "productId": "remove_ads",
+          "type": "non_consumable",
+          "entitlement": "remove_ads"
+        },
+        {
+          "productId": "sky_collection",
+          "type": "non_consumable",
+          "entitlement": "sky_collection"
+        }
+      ]
     }
   ]
 }
