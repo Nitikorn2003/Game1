@@ -28,7 +28,7 @@ first real build happens on your computer or in CI. Report anything that fails.
 ## 1. A first build, with no accounts
 
 Nothing needs to be set up for this build. It shows Google's test ads and has no sign-in,
-cloud saves or purchases (the shop shows its items as unavailable).
+cloud saves or purchases (the shop offers only ad rewards).
 
 ```sh
 npm run android:apk -w games/lodelings
@@ -49,6 +49,8 @@ backslashes, for example `sdk.dir=C\:\\Users\\you\\AppData\\Local\\Android\\Sdk`
 ## 2. Connecting the real services
 
 Each service is optional on its own: the app works without it and leaves that part out.
+With only the AdMob settings, the app is the ads-only edition: its shop offers only ad
+rewards, and it needs no server (see [RELEASE.md](RELEASE.md) for choosing an edition).
 Two files hold the settings, and git ignores both. Their committed `.example` files show
 every setting.
 
@@ -120,7 +122,7 @@ npm run android:bundle -w games/lodelings
 
 The bundle is `android/app/build/outputs/bundle/release/app-release.aab`. Upload it to an
 internal testing track first. A release build warns when it still uses Google's test AdMob
-app id.
+app id. [RELEASE.md](RELEASE.md) walks through Play Console from there.
 
 ## Icon and launch screen
 
