@@ -20,6 +20,8 @@ coverage/
 test-results/
 playwright-report/
 *.log
+# Store graphics and screenshots: tools/store-assets.ts makes them again.
+games/*/store/out/
 # Per-game Firebase, AdMob and signing settings stay out of the public repo.
 google-services.json
 GoogleService-Info.plist

@@ -122,10 +122,26 @@ The bundle is `android/app/build/outputs/bundle/release/app-release.aab`. Upload
 internal testing track first. A release build warns when it still uses Google's test AdMob
 app id.
 
+## Icon and launch screen
+
+The launcher icon (with its themed one-colour layer for Android 13 and later), the icons for
+Android 7 and the launch screen icon are drawn from the game's own art in `store/art.tsx`:
+
+```sh
+npx tsx tools/store-assets.ts games/lodelings android
+```
+
+It writes the PNGs into `android/app/src/main/res/` for every screen density. Run it again
+after changing the art and commit the result. Open `store/art.html` in the dev server
+(`npm run dev -w games/lodelings`) to see every icon side by side; add `?guides` to see the
+circle that every launcher shape keeps.
+
 ## Files in `android/`
 
 `cap add android` made this project from Capacitor's template. Edited since:
 `build.gradle` (one Kotlin version for every module), `variables.gradle` (Google sign-in),
 `app/build.gradle` (app id, version, AdMob app id, signing), `app/src/main/AndroidManifest.xml`
-(AdMob app id, vibration) and `.gitignore`. `cap sync` rewrites `capacitor.settings.gradle`
-and `app/capacitor.build.gradle` and fills the ignored `app/src/main/assets/`.
+(AdMob app id, vibration), `.gitignore`, and in `app/src/main/res/` the icons, the launch
+screen (`drawable/splash.xml`, `values/colors.xml` and the launch theme in
+`values/styles.xml`). `cap sync` rewrites `capacitor.settings.gradle` and
+`app/capacitor.build.gradle` and fills the ignored `app/src/main/assets/`.

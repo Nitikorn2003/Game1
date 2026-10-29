@@ -9,6 +9,7 @@
     "games/*/src",
     "games/*/test",
     "games/*/e2e",
+    "games/*/store",
     "games/*/*.ts",
     "tools/**/*.ts",
     "vitest.config.ts"

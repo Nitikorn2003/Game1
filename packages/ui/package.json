@@ -6,7 +6,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./ui.css": "./src/ui.css"
+    "./ui.css": "./src/ui.css",
+    "./store-art": "./src/store-art.tsx"
   },
   "dependencies": {
     "@game1/engine": "*",
