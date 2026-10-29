@@ -102,13 +102,15 @@ public class PlayBillingGateway(context: Context) : BillingGateway {
      *
      * [obfuscatedAccountId] must come from PurchaseCoordinator.checkoutAccountId(): the server
      * grants a purchase only to the player whose id it carries. [offerToken] picks one of the
-     * product's one-time offers; by default the first one Google Play returned.
+     * product's one-time offers; by default the first one Google Play returned, or the
+     * product's only offer.
      */
     public fun launchPurchase(
         activity: Activity,
         product: ProductDetails,
         obfuscatedAccountId: String,
-        offerToken: String? = product.oneTimePurchaseOfferDetailsList?.firstOrNull()?.offerToken,
+        offerToken: String? = product.oneTimePurchaseOfferDetailsList?.firstOrNull()?.offerToken
+            ?: product.oneTimePurchaseOfferDetails?.offerToken,
     ): BillingResult {
         require(obfuscatedAccountId.length in 1..64) { "obfuscatedAccountId must be 1 to 64 characters" }
         val item = BillingFlowParams.ProductDetailsParams.newBuilder().setProductDetails(product)

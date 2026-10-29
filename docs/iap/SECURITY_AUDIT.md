@@ -10,8 +10,9 @@ the fixes listed below, but the system has never run against the real Google Pla
 
 1. Every automated test talks to a local fake of the Google Play Developer API. No real
    purchase, refund or notification has gone through it yet.
-2. The Google Play adapter (`billing-play`) is compiled and unit-tested in CI only. It has
-   not run on a device.
+2. The Google Play adapter (`billing-play`) builds against the real Play Billing Library
+   and Android SDK only in CI. Locally it was compiled against stubs written from the
+   documented 9.1 API. It has not run on a device.
 3. None of the external setup exists yet: Play Console products, license testers, the
    service account, Pub/Sub, sign-in and hosting
    ([PLAY_CONSOLE_SETUP.md](PLAY_CONSOLE_SETUP.md)).
@@ -80,7 +81,7 @@ Totals from the local runs on 29 October 2026:
 | --- | --- | --- | --- |
 | Server, PostgreSQL 16, Node.js 22 | 163 | 0 | Local; CI also runs Node.js 24 |
 | Android `billing-core`, JDK 21 | 28 | 0 | Local and CI |
-| Android `billing-play` | 3 | not run locally | CI only (needs the Android SDK and Google's Maven repository) |
+| Android `billing-play` | 3 | 0 | Locally against stubs of the documented Play Billing Library 9.1 API; the real build (Android SDK and Google's Maven repository) runs in CI |
 
 The server suite was run five times in a row without a failure. `npm audit` found no known
 vulnerabilities.
