@@ -103,6 +103,51 @@
           "entitlement": "remove_ads"
         }
       ]
+    },
+    {
+      "gameId": "quiltnook",
+      "packageName": "com.example.quiltnook",
+      "products": [
+        {
+          "productId": "spools_small",
+          "type": "consumable",
+          "grants": {
+            "spools": 60
+          }
+        },
+        {
+          "productId": "spools_medium",
+          "type": "consumable",
+          "grants": {
+            "spools": 350
+          }
+        },
+        {
+          "productId": "spools_large",
+          "type": "consumable",
+          "grants": {
+            "spools": 800
+          }
+        },
+        {
+          "productId": "sewing_kit",
+          "type": "non_consumable",
+          "grants": {
+            "spools": 200
+          },
+          "entitlement": "sewing_kit"
+        },
+        {
+          "productId": "remove_ads",
+          "type": "non_consumable",
+          "entitlement": "remove_ads"
+        },
+        {
+          "productId": "fabric_chest",
+          "type": "non_consumable",
+          "entitlement": "fabric_chest"
+        }
+      ]
     }
   ]
 }

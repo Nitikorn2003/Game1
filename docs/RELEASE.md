@@ -1,8 +1,9 @@
 # Releasing a game on Google Play
 
-These are the steps every Game1 game goes through. Each game's own `RELEASE.md` (for example
-[Lodelings](../games/lodelings/RELEASE.md)) has its answers: its name and category, what each
-edition sells, what to play through before an upload, and the facts for its content rating.
+These are the steps every Game1 game goes through. Each game's own `RELEASE.md`
+([Lodelings](../games/lodelings/RELEASE.md), [Quilt Nook](../games/quiltnook/RELEASE.md)) has
+its answers: its name and category, what each edition sells, what to play through before an
+upload, and the facts for its content rating.
 Below, `<game>` is the game's folder name under `games/`.
 
 Everything the store asks for is made from the game's code and kept in step with it:

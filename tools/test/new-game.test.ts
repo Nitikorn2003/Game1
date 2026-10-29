@@ -56,13 +56,22 @@ describe('starting a new game from the template', () => {
 
   it('gives each game its own play test port and its products in the server catalog', () => {
     const where = sandbox();
-    expect(scaffold({ id: 'quiltnook', name: 'Quilt Nook', ...where }).port).toBe(4180);
+    expect(scaffold({ id: 'pondlife', name: 'Pond Life', ...where }).port).toBe(4180);
     expect(scaffold({ id: 'gametwo', name: 'Game Two', ...where }).port).toBe(4181);
     const catalog = JSON.parse(readFileSync(where.catalog, 'utf8')) as Catalog;
     const starter = catalog.games.find((g) => g.gameId === TEMPLATE.id);
-    const quilt = catalog.games.find((g) => g.gameId === 'quiltnook');
-    expect(quilt).toEqual({ gameId: 'quiltnook', packageName: 'com.example.quiltnook', products: starter?.products });
+    const pond = catalog.games.find((g) => g.gameId === 'pondlife');
+    expect(pond).toEqual({ gameId: 'pondlife', packageName: 'com.example.pondlife', products: starter?.products });
     expect(catalog.games.filter((g) => g.gameId === 'gametwo')).toHaveLength(1);
+  });
+
+  it('leaves a catalog entry the game already has as it is', () => {
+    const where = sandbox();
+    const before = (JSON.parse(readFileSync(where.catalog, 'utf8')) as Catalog).games.find((g) => g.gameId === 'quiltnook');
+    expect(before).toBeDefined();
+    scaffold({ id: 'quiltnook', name: 'Quilt Nook', ...where });
+    const after = (JSON.parse(readFileSync(where.catalog, 'utf8')) as Catalog).games.filter((g) => g.gameId === 'quiltnook');
+    expect(after).toEqual([before]);
   });
 
   it('refuses names that would break a file, and never overwrites a game', () => {

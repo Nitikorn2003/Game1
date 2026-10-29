@@ -11,8 +11,9 @@ page named in brackets.
 
 1. Create the app. Its package name must equal `packageName` in the server catalog.
 2. Upload a build that includes Google Play Billing Library 9.1.0 to the internal testing
-   track (for Lodelings, `games/lodelings/ANDROID.md` explains the build). Play Console only
-   lets you create products once a build with the billing library is uploaded.
+   track (each game's `ANDROID.md`, such as `games/lodelings/ANDROID.md`, explains the
+   build). Play Console only lets you create products once a build with the billing library
+   is uploaded.
 3. Create the one-time products under Monetize with Play, Products, One-time products. The
    product ids must match the catalog exactly (`gems_100`, `remove_ads`, ...). Give each one
    a "buy" purchase option. The server refuses rentals.

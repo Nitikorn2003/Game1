@@ -22,6 +22,7 @@
   --g1-note-bad-text: #ffc4bb;
   /* Text fields. */
   --g1-field-bg: #0d0a08;
+  /* Also settable: --g1-bar-bg (progress bar track), --g1-toast-bg and --g1-toast-text. */
   /* Room the app leaves for the phone's status and navigation bars. A host page that already pads
      the document for them sets these to 0px. Fixed overlays always use env() directly. */
   --g1-inset-top: env(safe-area-inset-top, 0px);
@@ -112,7 +113,7 @@
   position: relative;
   height: 10px;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.45);
+  background: var(--g1-bar-bg, rgba(0, 0, 0, 0.45));
   overflow: hidden;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
 }
@@ -214,7 +215,8 @@
   pointer-events: none;
 }
 .g1-toast {
-  background: rgba(24, 18, 15, 0.94);
+  background: var(--g1-toast-bg, rgba(24, 18, 15, 0.94));
+  color: var(--g1-toast-text, var(--g1-text));
   border-radius: 12px;
   padding: 10px 14px;
   box-shadow: var(--g1-shadow), inset 0 0 0 1px var(--g1-line);

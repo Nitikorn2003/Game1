@@ -49,7 +49,7 @@ breaks may start. Everything else (saving, purchases, ads, accounts) it calls fr
 ## Making a new game
 
 ```sh
-npx tsx tools/new-game.ts <id> "<Name>"     # for example: quiltnook "Quilt Nook"
+npx tsx tools/new-game.ts <id> "<Name>"     # for example: pondlife "Pond Life"
 npm install
 npm test && npm run e2e -w games/<id>
 ```
@@ -59,7 +59,8 @@ coin, buy upgrades, one rewarded ad, two products), to `games/<id>` and puts the
 name everywhere the template has its own: the npm package, the Android app and its Java
 package, the save format, the storage prefix and the store text. It gives the game its own
 port for the play tests and adds it to the purchase server's example catalog. The copy builds
-and passes the template's tests before anything else changes.
+and passes the template's tests before anything else changes. [Quilt Nook](../games/quiltnook)
+started this way.
 
 Then make it the new game, in this order:
 

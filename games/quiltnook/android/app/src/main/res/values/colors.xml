@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The game's page background (index.html), so the launch screen fades into the game. -->
+    <color name="splash_background">#EADFCD</color>
+</resources>
