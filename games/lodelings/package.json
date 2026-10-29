@@ -8,7 +8,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "build:single": "vite build --mode single && tsx ../../tools/inline-html.ts dist-single dist-single/lodelings.html --title \"Lodelings Test Build\""
   },
   "dependencies": {
     "@fontsource/mitr": "5.3.0",

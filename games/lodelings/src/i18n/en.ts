@@ -221,6 +221,7 @@ export const en = {
   'toast.saveFailed': 'Saving failed. Free up some space on your device.',
   'toast.saveRecovered': 'Your newest save was damaged, so the copy before it was loaded.',
   'toast.saveUnreadable': 'Your save could not be read, so a new game started. The old save was kept aside.',
+  'app.startFailed': 'Lodelings could not start. Close the game and open it again.',
   'toast.adUnavailable': 'No ad is available right now. Try again later.',
   'toast.dailyReady': 'Your daily reward is waiting!',
   'toast.relicUp': '{name} is now level {level}',

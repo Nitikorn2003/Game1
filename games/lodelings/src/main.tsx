@@ -2,7 +2,7 @@ import '@game1/ui/ui.css';
 import './fonts.css';
 import './styles.css';
 import { browserScheduler, systemClock } from '@game1/engine';
-import { TestAds, TestStore, onAppHidden, onAppVisible, webHaptics, webStorage } from '@game1/platform';
+import { TestAds, TestStore, hotSwap, onAppHidden, onAppVisible, webHaptics, webStorage } from '@game1/platform';
 import { render } from 'preact';
 import { webSound } from './audio.js';
 import { CATALOG } from './catalog.js';
@@ -10,12 +10,12 @@ import { Game } from './game.js';
 import { resolveLocale, translator, type StringKey } from './i18n/index.js';
 import { App } from './ui/App.js';
 
+const languages = navigator.languages.length > 0 ? navigator.languages : [navigator.language];
+
 /** The browser version: simulated ads and store, saves in localStorage. */
-async function main(): Promise<void> {
-  const root = document.getElementById('app');
-  if (!root) throw new Error('Missing #app');
+async function main(root: HTMLElement): Promise<void> {
   const storage = webStorage('lodelings:');
-  const languages = navigator.languages.length > 0 ? navigator.languages : [navigator.language];
+  const swap = await hotSwap();
   let game: Game | null = null;
   const t = (key: StringKey, params?: Record<string, string>) => translator(resolveLocale(game?.state.settings.locale ?? 'auto', languages)).t(key, params);
 
@@ -42,6 +42,9 @@ async function main(): Promise<void> {
 
   const loaded = await Game.load({ clock: systemClock, scheduler: browserScheduler, storage, ads, store, haptics: webHaptics, sound: webSound() });
   game = loaded;
+  const carried = (swap.data as { save?: unknown } | undefined)?.save;
+  if (typeof carried === 'string') await loaded.importSave(carried);
+  swap.keep(() => ({ save: loaded.exportSave() }));
   onAppHidden(() => {
     void loaded.suspend();
   });
@@ -52,4 +55,13 @@ async function main(): Promise<void> {
   loaded.start();
 }
 
-void main();
+const root = document.getElementById('app');
+if (root) {
+  main(root).catch((err: unknown) => {
+    console.error(err);
+    const message = document.createElement('p');
+    message.className = 'boot-error';
+    message.textContent = translator(resolveLocale('auto', languages)).t('app.startFailed');
+    root.replaceChildren(message);
+  });
+}

@@ -26,18 +26,21 @@ export function webStorage(prefix: string): WebStore {
   }
   return {
     persistent: true,
-    get: (key) => Promise.resolve(storage.getItem(prefix + key)),
-    set: (key, value) => {
-      try {
-        storage.setItem(prefix + key, value);
-        return Promise.resolve();
-      } catch (err) {
-        return Promise.reject(err instanceof Error ? err : new Error(String(err)));
-      }
-    },
-    remove: (key) => {
+    get: (key) => attempt(() => storage.getItem(prefix + key)),
+    set: (key, value) => attempt(() => {
+      storage.setItem(prefix + key, value);
+    }),
+    remove: (key) => attempt(() => {
       storage.removeItem(prefix + key);
-      return Promise.resolve();
-    },
+    }),
   };
+}
+
+/** Storage can still throw after the probe (quota full, site data blocked mid-session); callers get a rejected promise. */
+function attempt<T>(run: () => T): Promise<T> {
+  try {
+    return Promise.resolve(run());
+  } catch (err) {
+    return Promise.reject(err instanceof Error ? err : new Error(String(err)));
+  }
 }

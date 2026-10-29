@@ -204,6 +204,7 @@ export const th: Partial<Record<StringKey, string>> = {
   'toast.saveFailed': 'บันทึกไม่สำเร็จ ลองเคลียร์พื้นที่ในเครื่อง',
   'toast.saveRecovered': 'เซฟล่าสุดเสียหาย จึงโหลดเซฟก่อนหน้านั้นแทน',
   'toast.saveUnreadable': 'อ่านเซฟไม่ได้ จึงเริ่มเกมใหม่ เซฟเก่าถูกเก็บแยกไว้',
+  'app.startFailed': 'เปิดเกมไม่สำเร็จ ลองปิดเกมแล้วเปิดใหม่อีกครั้ง',
   'toast.adUnavailable': 'ตอนนี้ยังไม่มีโฆษณา ลองใหม่ภายหลัง',
   'toast.dailyReady': 'รางวัลรายวันรออยู่!',
   'toast.relicUp': '{name} เลเวล {level} แล้ว',

@@ -9,7 +9,7 @@ export interface OverlayButton {
 }
 
 const STYLE = `
-.g1-test-overlay{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(5,4,10,.82);font-family:system-ui,sans-serif}
+.g1-test-overlay{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:max(16px,env(safe-area-inset-top,0px)) 16px max(16px,env(safe-area-inset-bottom,0px));background:rgba(5,4,10,.82);font-family:system-ui,sans-serif}
 .g1-test-card{width:min(360px,100%);background:#fff;color:#1d1b24;border-radius:18px;padding:20px 18px 16px;box-shadow:0 20px 60px rgba(0,0,0,.5);text-align:center}
 .g1-test-card h3{margin:0 0 6px;font-size:18px}
 .g1-test-card p{margin:6px 0 14px;font-size:14px;line-height:1.4;color:#4b4858}

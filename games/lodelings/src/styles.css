@@ -8,6 +8,9 @@
   color-scheme: dark;
 }
 
+html {
+  box-sizing: border-box;
+}
 html,
 body {
   margin: 0;
@@ -22,7 +25,14 @@ body {
 #app {
   width: 100%;
   max-width: 520px;
-  height: 100dvh;
+  height: 100%;
+}
+.boot-error {
+  margin: 0;
+  padding: 40px 24px;
+  color: #fff4e6;
+  font: 500 17px/1.5 'Mitr', system-ui, sans-serif;
+  text-align: center;
 }
 button {
   -webkit-tap-highlight-color: transparent;
@@ -31,7 +41,7 @@ button {
 .app {
   display: flex;
   flex-direction: column;
-  height: 100dvh;
+  height: 100%;
   overflow: hidden;
   position: relative;
   box-shadow: 0 0 60px rgba(0, 0, 0, 0.6);
@@ -43,7 +53,7 @@ button {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: max(6px, env(safe-area-inset-top)) 8px 6px;
+  padding: max(6px, var(--g1-inset-top)) 8px 6px;
   background: linear-gradient(#1f1815, #15110f);
   border-bottom: 1px solid var(--g1-line);
   z-index: 2;
