@@ -238,6 +238,51 @@
           "entitlement": "canal_collection"
         }
       ]
+    },
+    {
+      "gameId": "ricefield",
+      "packageName": "com.example.ricefield",
+      "products": [
+        {
+          "productId": "seeds_small",
+          "type": "consumable",
+          "grants": {
+            "seeds": 500
+          }
+        },
+        {
+          "productId": "seeds_medium",
+          "type": "consumable",
+          "grants": {
+            "seeds": 3000
+          }
+        },
+        {
+          "productId": "seeds_large",
+          "type": "consumable",
+          "grants": {
+            "seeds": 7000
+          }
+        },
+        {
+          "productId": "farmer_kit",
+          "type": "non_consumable",
+          "grants": {
+            "seeds": 1000
+          },
+          "entitlement": "farmer_kit"
+        },
+        {
+          "productId": "remove_ads",
+          "type": "non_consumable",
+          "entitlement": "remove_ads"
+        },
+        {
+          "productId": "field_collection",
+          "type": "non_consumable",
+          "entitlement": "field_collection"
+        }
+      ]
     }
   ]
 }

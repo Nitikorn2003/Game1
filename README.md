@@ -9,6 +9,7 @@ purchases verified on a server.
 | [`games/quiltnook`](games/quiltnook) | **Quilt Nook**, a cozy block puzzle: drag fabric patches onto an 8 by 8 quilt, stitch full rows and columns into seams, keep a streak going, sew the daily quilt, fill commissions for spools and collect fabric sets. No timers, and nothing for sale is random. English and Thai. Made from the starter template. [Android build](games/quiltnook/ANDROID.md), [Google Play release](games/quiltnook/RELEASE.md). |
 | [`games/skyjars`](games/skyjars) | **Sky Jars**, a calm colour sort puzzle under the night sky: pour starlight between glass jars until each holds one colour, with undo, restart, hints and an extra jar when a shelf gets hard. Every solved level lights a star of a 24-constellation sky atlas; a daily sky keeps a streak, and stardust buys jar styles and skies. Ten colours, each with its own symbol. English and Thai. Made from the starter template. [Android build](games/skyjars/ANDROID.md), [Google Play release](games/skyjars/RELEASE.md). |
 | [`games/lotuscanal`](games/lotuscanal) | **Lotus Canal**, a peaks solitaire card game on a boat trip through a floating market: play face-up cards one rank higher or lower than the open card, with runs that pay bonus coins, undo, a lotus wild and five more cards when a deal gets hard. Every cleared level takes the boat one stop along twelve canals, each ending in a postcard; a daily deal keeps a streak, and coins buy card backs and scenes. Every deal can be cleared. English and Thai. Made from the starter template. [Android build](games/lotuscanal/ANDROID.md), [Google Play release](games/lotuscanal/RELEASE.md). |
+| [`games/ricefield`](games/ricefield) | **Rice Field Art**, a picture logic puzzle (nonogram) set in the rice fields: read the numbers along each row and column, plant rice where it must go and pebble the cells that stay empty, tap by tap or by dragging along a line, and watch the picture grow in colour. 72 hand-made pictures in six albums, from 5 by 5 to 12 by 12, each one proven to need no guessing; three hearts per field, a free hint per field, and a daily pattern with a streak. Seeds buy scenes and markers. English and Thai. Made from the starter template. [Android build](games/ricefield/ANDROID.md), [Google Play release](games/ricefield/RELEASE.md). |
 | [`templates/starter`](templates/starter) | **Starter**, the smallest complete game (tap a coin, buy upgrades, a rewarded ad, two products), with its Android project, store files and tests. `tools/new-game.ts` copies it to start a new game: see [the framework](docs/FRAMEWORK.md). |
 | [`packages/engine`](packages/engine) | Game-agnostic core: fixed-step loop, clocks, versioned saves with checksums, seeded random numbers, economy math, number formatting, daily resets, i18n. |
 | [`packages/platform`](packages/platform) | Device services behind small interfaces: storage, ads (test ads, AdMob with Google's consent form), purchases (test store, Google Play through the purchase server), sign-in (Firebase), cloud saves, haptics. |
@@ -36,6 +37,7 @@ npm run dev -w games/lodelings      # the browser version, with test ads and a t
 npm run dev -w games/quiltnook
 npm run dev -w games/skyjars
 npm run dev -w games/lotuscanal
+npm run dev -w games/ricefield
 npm run typecheck && npm run lint
 npm test                            # unit tests of the framework and the games
 npm run build && npm run e2e        # builds, then plays each game in a phone-sized browser
@@ -61,6 +63,7 @@ npm run android:apk -w games/lodelings
 npm run android:apk -w games/quiltnook
 npm run android:apk -w games/skyjars
 npm run android:apk -w games/lotuscanal
+npm run android:apk -w games/ricefield
 ```
 
 CI runs all of these on every pull request.

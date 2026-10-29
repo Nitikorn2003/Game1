@@ -60,7 +60,8 @@ name everywhere the template has its own: the npm package, the Android app and i
 package, the save format, the storage prefix and the store text. It gives the game its own
 port for the play tests and adds it to the purchase server's example catalog. The copy builds
 and passes the template's tests before anything else changes. [Quilt Nook](../games/quiltnook),
-[Sky Jars](../games/skyjars) and [Lotus Canal](../games/lotuscanal) started this way.
+[Sky Jars](../games/skyjars), [Lotus Canal](../games/lotuscanal) and
+[Rice Field Art](../games/ricefield) started this way.
 
 Then make it the new game, in this order:
 
