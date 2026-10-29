@@ -193,6 +193,51 @@
           "entitlement": "sky_collection"
         }
       ]
+    },
+    {
+      "gameId": "lotuscanal",
+      "packageName": "com.example.lotuscanal",
+      "products": [
+        {
+          "productId": "coins_small",
+          "type": "consumable",
+          "grants": {
+            "coins": 500
+          }
+        },
+        {
+          "productId": "coins_medium",
+          "type": "consumable",
+          "grants": {
+            "coins": 3000
+          }
+        },
+        {
+          "productId": "coins_large",
+          "type": "consumable",
+          "grants": {
+            "coins": 7000
+          }
+        },
+        {
+          "productId": "market_kit",
+          "type": "non_consumable",
+          "grants": {
+            "coins": 1000
+          },
+          "entitlement": "market_kit"
+        },
+        {
+          "productId": "remove_ads",
+          "type": "non_consumable",
+          "entitlement": "remove_ads"
+        },
+        {
+          "productId": "canal_collection",
+          "type": "non_consumable",
+          "entitlement": "canal_collection"
+        }
+      ]
     }
   ]
 }

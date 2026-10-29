@@ -137,7 +137,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        game: [lodelings, quiltnook, skyjars]
+        game: [lodelings, quiltnook, skyjars, lotuscanal]
     steps:
       - uses: actions/checkout@v7
         with:
