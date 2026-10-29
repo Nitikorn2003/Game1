@@ -5,12 +5,12 @@ import {
   FirebaseAuth,
   IapServerClient,
   PlayStore,
+  noStore,
   webHaptics,
   webStorage,
   type AdMobPlugin,
   type FirebaseAuthenticationPlugin,
   type NativeBilling,
-  type StoreService,
 } from '@game1/platform';
 import { handleBack } from '@game1/ui';
 import type { Services } from './boot.js';
@@ -57,16 +57,6 @@ export function nativeConfig(env: NativeEnv): NativeConfig {
   };
 }
 
-/** A build without a purchase server sells nothing. */
-const noStore: StoreService = {
-  name: 'play',
-  products: (ids) => Promise.resolve(CATALOG.filter((p) => ids.includes(p.id)).map((p) => ({ id: p.id, kind: p.kind, price: null }))),
-  purchase: () => Promise.resolve({ status: 'failed', reason: 'no_server', retryable: false }),
-  wallet: () => Promise.reject(new Error('This build has no purchase server.')),
-  settle: () => Promise.reject(new Error('This build has no purchase server.')),
-  onChange: () => () => undefined,
-};
-
 /** The Android app: AdMob, Google Play purchases through the purchase server, Firebase sign-in. */
 export function nativeServices(config: NativeConfig): Services {
   const admob = registerPlugin<AdMobPlugin>('AdMob');
@@ -79,7 +69,8 @@ export function nativeServices(config: NativeConfig): Services {
   const ads = new AdMobAds(admob, config.adUnits ? { units: config.adUnits, testing: false } : { units: ADMOB_TEST_UNITS, testing: true });
   let play: PlayStore | null = null;
   let account: AccountOptions | undefined;
-  // Without Firebase in the build (no google-services.json) there is no sign-in, so no purchases.
+  // Without Firebase in the build (no google-services.json) there is no sign-in, so no purchases:
+  // the app is then the ads-only edition, and its shop offers only what ads give.
   if (config.serverUrl && Capacitor.isPluginAvailable('FirebaseAuthentication')) {
     const auth = new FirebaseAuth(firebase);
     const idToken = (forceRefresh: boolean) => auth.idToken(forceRefresh);

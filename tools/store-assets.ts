@@ -21,12 +21,19 @@ export interface StoreScreen {
   show: (page: Page, url: string) => Promise<void>;
 }
 
+/**
+ * A game can launch with ads only, before its purchase server is hosted, and add purchases in
+ * an update. Its listing must describe the build that is uploaded.
+ */
+export const EDITIONS = ['full', 'ads-only'] as const;
+export type Edition = (typeof EDITIONS)[number];
+
 /** What Play Console asks for in each listing language, within its length limits. */
 export interface StoreListing {
   title: string;
   shortDescription: string;
   fullDescription: string;
-  /** The in-app products as Play Console lists them. */
+  /** The in-app products as Play Console lists them; none in the ads-only edition. */
   products: readonly { id: string; name: string; description: string }[];
 }
 
@@ -42,7 +49,7 @@ export interface PrivacyPolicy {
 export interface StoreConfig {
   /** The listing languages, as the game's locale codes; each gets its own graphics and text. */
   locales: readonly string[];
-  listing: (locale: string) => StoreListing;
+  listing: (locale: string, edition: Edition) => StoreListing;
   privacy: (locale: string) => PrivacyPolicy;
   /** Two to eight phone screenshots, in the order Google Play shows them. */
   screens: readonly StoreScreen[];
@@ -77,7 +84,8 @@ export function listingProblems(listing: StoreListing): string[] {
 
 function listingText(listing: StoreListing): string {
   const products = listing.products.map((p) => `${p.id}\n  ${p.name}\n  ${p.description}`).join('\n');
-  return `TITLE\n${listing.title}\n\nSHORT DESCRIPTION\n${listing.shortDescription}\n\nFULL DESCRIPTION\n${listing.fullDescription}\n\nIN-APP PRODUCTS (id, name, description)\n${products}\n`;
+  const text = `TITLE\n${listing.title}\n\nSHORT DESCRIPTION\n${listing.shortDescription}\n\nFULL DESCRIPTION\n${listing.fullDescription}\n`;
+  return products ? `${text}\nIN-APP PRODUCTS (id, name, description)\n${products}\n` : text;
 }
 
 const escapeHtml = (text: string) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -123,13 +131,15 @@ p { margin: 0; }
 
 function writeListings(game: string, config: StoreConfig): void {
   for (const locale of config.locales) {
-    const listing = config.listing(locale);
-    const problems = listingProblems(listing);
-    if (problems.length > 0) throw new Error(`The ${locale} listing: ${problems.join('; ')}`);
-    const file = join(game, 'store/out', locale, 'listing.txt');
-    mkdirSync(dirname(file), { recursive: true });
-    writeFileSync(file, listingText(listing));
-    console.log(relative(game, file));
+    for (const edition of EDITIONS) {
+      const listing = config.listing(locale, edition);
+      const problems = listingProblems(listing);
+      if (problems.length > 0) throw new Error(`The ${locale} ${edition} listing: ${problems.join('; ')}`);
+      const file = join(game, 'store/out', locale, edition === 'full' ? 'listing.txt' : `listing-${edition}.txt`);
+      mkdirSync(dirname(file), { recursive: true });
+      writeFileSync(file, listingText(listing));
+      console.log(relative(game, file));
+    }
   }
   const page = join(game, 'store/out/privacy.html');
   writeFileSync(page, privacyPage(config));

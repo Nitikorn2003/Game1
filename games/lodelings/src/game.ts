@@ -452,7 +452,13 @@ export class Game {
     return result === 'linked';
   }
 
+  /** False in the ads-only edition, which has no purchase server: its shop has no paid items. */
+  get sells(): boolean {
+    return this.o.store.name !== 'none';
+  }
+
   async loadProducts(): Promise<void> {
+    if (!this.sells) return;
     try {
       const list = await this.o.store.products(CATALOG.map((p) => p.id));
       this.products = new Map(list.map((p) => [p.id, p]));
@@ -480,6 +486,7 @@ export class Game {
    * times. Resolves to false if the server could not be reached.
    */
   syncPurchases(quiet: boolean): Promise<boolean> {
+    if (!this.sells) return Promise.resolve(false);
     this.syncRequests += 1;
     if (this.syncing) return this.syncing;
     const run = async () => {

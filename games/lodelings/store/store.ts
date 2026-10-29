@@ -9,7 +9,7 @@ const known = (locale: string): Locale => LOCALES.find((l) => l === locale) ?? '
 
 const config: StoreConfig = {
   locales: LOCALES,
-  listing: (locale) => listing(known(locale)),
+  listing: (locale, edition) => listing(known(locale), edition),
   privacy: (locale) => {
     const text = translator(known(locale));
     return {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { listingProblems, privacyPage } from '../../../tools/store-assets.js';
+import { EDITIONS, listingProblems, privacyPage } from '../../../tools/store-assets.js';
 import { CATALOG } from '../src/catalog.js';
 import { LOCALES } from '../src/i18n/index.js';
 import { PRIVACY_POLICY } from '../src/privacy.js';
@@ -7,18 +7,29 @@ import { listing } from '../store/listing.js';
 import config from '../store/store.js';
 
 describe('the Google Play listing', () => {
-  it.each(LOCALES)('fits Play Console in %s', (locale) => {
-    expect(listingProblems(listing(locale))).toEqual([]);
+  const every = LOCALES.flatMap((locale) => EDITIONS.map((edition) => [locale, edition] as const));
+
+  it.each(every)('fits Play Console in %s, %s edition', (locale, edition) => {
+    expect(listingProblems(listing(locale, edition))).toEqual([]);
   });
 
   it.each(LOCALES)('names every in-app product in %s', (locale) => {
-    const products = listing(locale).products;
+    const products = listing(locale, 'full').products;
     expect(products.map((p) => p.id)).toEqual(CATALOG.map((item) => item.id));
     for (const product of products) expect(product.name, product.id).not.toBe(product.id);
   });
 
+  it.each(LOCALES)('promises nothing in %s that the ads-only edition lacks', (locale) => {
+    const adsOnly = listing(locale, 'ads-only');
+    const full = listing(locale, 'full');
+    expect(adsOnly.products).toEqual([]);
+    expect(adsOnly.fullDescription).not.toContain(full.products.find((p) => p.id === 'remove_ads')?.name);
+    expect(adsOnly.fullDescription).not.toMatch(/Google|cloud|คลาวด์|purchase|การซื้อ/i);
+    expect(adsOnly.shortDescription).toBe(full.shortDescription);
+  });
+
   it('catches what Play Console would refuse', () => {
-    const ok = listing('en');
+    const ok = listing('en', 'full');
     expect(listingProblems({ ...ok, title: 'Lodelings: The Best Free Idle Game' })).toEqual([
       'title has 34 characters, over 30',
       '"Best" in "Lodelings: The Best Free Idle Game"',

@@ -1,5 +1,5 @@
 import { ManualClock, MemoryStore, localDayKey, type FrameScheduler } from '@game1/engine';
-import { TestStore, type AdOutcome, type AdsService, type Settlement, type StoreService } from '@game1/platform';
+import { TestStore, noStore, type AdOutcome, type AdsService, type Settlement, type StoreService } from '@game1/platform';
 import { describe, expect, it } from 'vitest';
 import { CATALOG } from '../src/catalog.js';
 import { Game, type GameOptions } from '../src/game.js';
@@ -215,6 +215,29 @@ describe('the game controller', () => {
     expect(second.state.shop.pending).toBeNull();
     await second.syncPurchases(false);
     expect(second.state.gems).toBe(gems + 550);
+  });
+
+  it('in the ads-only edition sells nothing, never asks for a wallet and still pays ad rewards', async () => {
+    const calls: string[] = [];
+    const store: StoreService = {
+      ...noStore,
+      products: (ids) => {
+        calls.push('products');
+        return noStore.products(ids);
+      },
+      wallet: () => {
+        calls.push('wallet');
+        return noStore.wallet();
+      },
+    };
+    const game = await started(rig({ store }));
+    expect(game.sells).toBe(false);
+    expect(await game.syncPurchases(false)).toBe(false);
+    expect(calls).toEqual([]);
+    expect(game.storeError).toBe(false);
+    const gems = game.state.gems;
+    expect(await game.watchAd('gem_crate')).toBe(true);
+    expect(game.state.gems).toBe(gems + C.GEM_CRATE_GEMS);
   });
 
   it('turns on what non-consumables unlock and sells the starter pack once', async () => {

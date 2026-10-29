@@ -31,7 +31,8 @@ export interface WalletView {
  * into its save, exactly once per settlement id.
  */
 export interface StoreService {
-  readonly name: 'test' | 'play';
+  /** 'none' sells nothing: see `noStore`. */
+  readonly name: 'test' | 'play' | 'none';
   products(ids: readonly string[]): Promise<Product[]>;
   purchase(productId: string): Promise<PurchaseResult>;
   wallet(): Promise<WalletView>;
@@ -39,6 +40,19 @@ export interface StoreService {
   /** Fires when a purchase completes outside purchase(), e.g. a pending payment cleared. */
   onChange(listener: () => void): () => void;
 }
+
+/**
+ * The store of a build that sells nothing, such as an app released with ads only before its
+ * purchase server exists. A game hides its paid items and never asks this store for a wallet.
+ */
+export const noStore: StoreService = {
+  name: 'none',
+  products: () => Promise.resolve([]),
+  purchase: () => Promise.resolve({ status: 'failed', reason: 'no_store', retryable: false }),
+  wallet: () => Promise.reject(new Error('This build sells nothing.')),
+  settle: () => Promise.reject(new Error('This build sells nothing.')),
+  onChange: () => () => undefined,
+};
 
 export interface CatalogItem {
   id: string;

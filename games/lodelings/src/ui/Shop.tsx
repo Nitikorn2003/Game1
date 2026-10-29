@@ -132,16 +132,20 @@ export function Shop(): JSX.Element {
       <h3 class="section">{t('shop.free')}</h3>
       <AdOffer placement="gem_crate" icon="gem" title={t('shop.freeGems')} desc={t('shop.freeGems.desc', { gems: GEM_CRATE_GEMS, left: R.adsLeft(s, 'gem_crate', day) })} />
       <AdOffer placement="blessing" icon="star" title={t('shop.blessing')} desc={t('shop.blessing.desc')} />
-      <h3 class="section">{t('shop.offers')}</h3>
-      {!s.shop.starterBought && <OfferCard id="starter_pack" owned={false} />}
-      <OfferCard id="remove_ads" owned={R.hasEntitlement(s, 'remove_ads')} />
-      <OfferCard id="ore_doubler" owned={R.hasEntitlement(s, 'ore_doubler')} />
-      <h3 class="section">{t('shop.gemsTitle')}</h3>
-      <div class="gem-grid">
-        {GEM_PACKS.map((id) => (
-          <GemPackCard key={id} id={id} />
-        ))}
-      </div>
+      {game.sells && (
+        <>
+          <h3 class="section">{t('shop.offers')}</h3>
+          {!s.shop.starterBought && <OfferCard id="starter_pack" owned={false} />}
+          <OfferCard id="remove_ads" owned={R.hasEntitlement(s, 'remove_ads')} />
+          <OfferCard id="ore_doubler" owned={R.hasEntitlement(s, 'ore_doubler')} />
+          <h3 class="section">{t('shop.gemsTitle')}</h3>
+          <div class="gem-grid" data-testid="gem-packs">
+            {GEM_PACKS.map((id) => (
+              <GemPackCard key={id} id={id} />
+            ))}
+          </div>
+        </>
+      )}
       <h3 class="section">{t('shop.gemShop')}</h3>
       <div class="card row-card">
         <div class="row-card__art row-card__art--icon">
