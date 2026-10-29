@@ -62,6 +62,7 @@ export async function createHttpApp(
     }),
     ...(config.RTDN_EXPECTED_SUBSCRIPTION ? { rtdnExpectedSubscription: config.RTDN_EXPECTED_SUBSCRIPTION } : {}),
     verifyRateLimitPerMinute: config.VERIFY_RATE_LIMIT_PER_MINUTE,
+    playerWriteRateLimitPerMinute: config.PLAYER_WRITE_RATE_LIMIT_PER_MINUTE,
     logger,
     trustProxy: parseTrustProxy(config.TRUST_PROXY) ?? false,
   });

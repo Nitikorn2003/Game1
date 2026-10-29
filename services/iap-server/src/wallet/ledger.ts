@@ -1,7 +1,7 @@
 import type { Pool, Queryable } from '../db/pool.js';
 import { withTransaction } from '../db/tx.js';
 
-export type LedgerReason = 'play_purchase' | 'play_revocation' | 'spend';
+export type LedgerReason = 'play_purchase' | 'play_revocation' | 'spend' | 'settlement';
 
 export interface LedgerEntry {
   gameId: string;

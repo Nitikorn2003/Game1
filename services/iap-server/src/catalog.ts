@@ -7,19 +7,23 @@ const productIdSchema = z.string().regex(/^[a-z0-9][a-z0-9._]{0,138}$/, 'invalid
 const currencySchema = z.string().regex(/^[a-z][a-z0-9_]{0,31}$/, 'invalid currency code');
 const entitlementSchema = z.string().regex(/^[a-z][a-z0-9_.]{0,63}$/, 'invalid entitlement id');
 
+const grantsSchema = z
+  .record(currencySchema, z.number().int().positive().max(1_000_000_000))
+  .refine((grants) => Object.keys(grants).length > 0, 'grants must name at least one currency');
+
 const consumableSchema = z.object({
   productId: productIdSchema,
   type: z.literal('consumable'),
   /** Currency credited per purchased unit, e.g. {"gems": 100}. */
-  grants: z
-    .record(currencySchema, z.number().int().positive().max(1_000_000_000))
-    .refine((grants) => Object.keys(grants).length > 0, 'a consumable must grant at least one currency'),
+  grants: grantsSchema,
 });
 
 const nonConsumableSchema = z.object({
   productId: productIdSchema,
   type: z.literal('non_consumable'),
   entitlement: entitlementSchema,
+  /** Currency credited once together with the entitlement, for one-time bundles such as a starter pack. */
+  grants: grantsSchema.optional(),
 });
 
 const productSchema = z.discriminatedUnion('type', [consumableSchema, nonConsumableSchema]);

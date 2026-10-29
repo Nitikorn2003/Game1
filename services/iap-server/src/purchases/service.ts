@@ -603,7 +603,7 @@ export class PurchaseService {
     return result;
   }
 
-  /** Credits currency or activates the entitlement exactly once for this purchase. */
+  /** Credits the currency and activates the entitlement of this purchase, exactly once. */
   private async grant(
     tx: Queryable,
     game: GameConfig,
@@ -614,19 +614,18 @@ export class PurchaseService {
     source: ReconcileSource,
   ): Promise<PurchaseRow> {
     const spec = grantSpecFor(evaluation.product);
-    if ('currency' in spec) {
-      for (const [currency, perUnit] of Object.entries(spec.currency).sort(([a], [b]) => a.localeCompare(b))) {
-        await applyLedgerEntryOnce(tx, {
-          gameId: game.gameId,
-          playerId,
-          currency,
-          delta: perUnit * evaluation.quantity,
-          reason: 'play_purchase',
-          idempotencyKey: `play:grant:${row.id}`,
-          purchaseId: row.id,
-        });
-      }
-    } else {
+    for (const [currency, perUnit] of Object.entries(spec.currency ?? {}).sort(([a], [b]) => a.localeCompare(b))) {
+      await applyLedgerEntryOnce(tx, {
+        gameId: game.gameId,
+        playerId,
+        currency,
+        delta: perUnit * evaluation.quantity,
+        reason: 'play_purchase',
+        idempotencyKey: `play:grant:${row.id}`,
+        purchaseId: row.id,
+      });
+    }
+    if (spec.entitlement !== undefined) {
       await tx.query(
         `INSERT INTO entitlements (game_id, player_id, entitlement, purchase_id, state)
          VALUES ($1, $2, $3, $4, 'active')
@@ -664,20 +663,19 @@ export class PurchaseService {
     if (targetRevoked <= row.revoked_quantity) return row;
     const units = targetRevoked - row.revoked_quantity;
     const spec = row.grant_spec;
-    if ('currency' in spec) {
-      for (const [currency, perUnit] of Object.entries(spec.currency).sort(([a], [b]) => a.localeCompare(b))) {
-        await applyLedgerEntryOnce(tx, {
-          gameId: row.game_id,
-          playerId: row.player_id,
-          currency,
-          // The balance may go negative if the currency was already spent (Google's advice).
-          delta: -perUnit * units,
-          reason: 'play_revocation',
-          idempotencyKey: `play:revoke:${row.id}:${targetRevoked}`,
-          purchaseId: row.id,
-        });
-      }
-    } else if (targetRevoked === row.quantity) {
+    for (const [currency, perUnit] of Object.entries(spec.currency ?? {}).sort(([a], [b]) => a.localeCompare(b))) {
+      await applyLedgerEntryOnce(tx, {
+        gameId: row.game_id,
+        playerId: row.player_id,
+        currency,
+        // The balance may go negative if the currency was already spent (Google's advice).
+        delta: -perUnit * units,
+        reason: 'play_revocation',
+        idempotencyKey: `play:revoke:${row.id}:${targetRevoked}`,
+        purchaseId: row.id,
+      });
+    }
+    if (spec.entitlement !== undefined && targetRevoked === row.quantity) {
       // Lock the entitlement first so two refunds of purchases backing it are applied in turn.
       await tx.query(
         'SELECT 1 FROM entitlements WHERE game_id = $1 AND player_id = $2 AND entitlement = $3 FOR UPDATE',

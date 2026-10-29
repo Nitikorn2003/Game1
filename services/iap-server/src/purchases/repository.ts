@@ -5,7 +5,11 @@ export type PurchaseState = 'new' | 'pending' | 'unclaimed' | 'granted' | 'revok
 export type FulfillmentState = 'not_required' | 'pending' | 'done' | 'failed';
 export type ProductType = 'consumable' | 'non_consumable';
 
-export type GrantSpec = { currency: Record<string, number> } | { entitlement: string };
+/** What one purchased unit granted, recorded at grant time. A one-time bundle has both parts. */
+export interface GrantSpec {
+  currency?: Record<string, number>;
+  entitlement?: string;
+}
 
 export interface PurchaseRow {
   id: number;

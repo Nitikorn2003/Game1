@@ -8,8 +8,11 @@ import type { Pool } from './db/pool.js';
 import { AppError, badRequest, unauthorized, unknownGame, upstreamUnavailable } from './errors.js';
 import { PlayApiError } from './play/play-api.js';
 import type { PurchaseService } from './purchases/service.js';
+import { deletePlayerData } from './players/delete-player.js';
 import { handleRtdnPush } from './rtdn/handler.js';
+import { MAX_SAVE_LENGTH, readCloudSave, writeCloudSave } from './saves/cloud-saves.js';
 import { getWallet } from './wallet/ledger.js';
+import { settleWallet } from './wallet/settle.js';
 
 export interface AppDeps {
   pool: Pool;
@@ -19,6 +22,8 @@ export interface AppDeps {
   verifyPubSubPush: PubSubPushVerifier;
   rtdnExpectedSubscription?: string;
   verifyRateLimitPerMinute: number;
+  /** Per player, for settlements and cloud save writes. */
+  playerWriteRateLimitPerMinute?: number;
   /** Omit to disable logging (tests). */
   logger?: FastifyBaseLogger;
   trustProxy?: FastifyServerOptions['trustProxy'];
@@ -36,6 +41,10 @@ const purchaseTokenSchema = z.string().min(8).max(4096).regex(/^[A-Za-z0-9._\-~+
 const productIdSchema = z.string().min(1).max(139).regex(/^[a-z0-9][a-z0-9._]*$/);
 const verifyBodySchema = z.object({ productId: productIdSchema, purchaseToken: purchaseTokenSchema }).strict();
 const gameParamsSchema = z.object({ gameId: z.string().min(1).max(64) });
+const settleBodySchema = z.object({ settlementId: z.string().regex(/^[A-Za-z0-9_-]{8,64}$/) }).strict();
+const saveBodySchema = z
+  .object({ baseRevision: z.number().int().positive().nullable(), data: z.string().min(1).max(MAX_SAVE_LENGTH) })
+  .strict();
 
 export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   const app = Fastify({
@@ -88,6 +97,15 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     return request.playerId;
   };
 
+  const playerWriteLimit = {
+    rateLimit: {
+      max: deps.playerWriteRateLimitPerMinute ?? 120,
+      timeWindow: '1 minute',
+      hook: 'preHandler' as const,
+      keyGenerator: (request: FastifyRequest) => request.playerId ?? request.ip,
+    },
+  };
+
   app.get('/healthz', () => ({ ok: true }));
 
   app.get('/readyz', async (_request, reply) => {
@@ -137,6 +155,42 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   app.get('/v1/games/:gameId/wallet', { onRequest: requirePlayer }, async (request) => {
     const game = resolveGame(request);
     return getWallet(deps.pool, game.gameId, currentPlayer(request));
+  });
+
+  /**
+   * Moves the wallet's currency into the game's save. The client picks settlementId and sends
+   * the same one again until its save holds the answer; a repeat returns the same amounts.
+   */
+  app.post('/v1/games/:gameId/wallet/settlements', { onRequest: requirePlayer, config: playerWriteLimit }, async (request) => {
+    const game = resolveGame(request);
+    const body = settleBodySchema.safeParse(request.body);
+    if (!body.success) throw badRequest('settlementId must be 8 to 64 letters, digits, "-" or "_"');
+    return settleWallet(deps.pool, { gameId: game.gameId, playerId: currentPlayer(request), settlementId: body.data.settlementId });
+  });
+
+  app.get('/v1/games/:gameId/save', { onRequest: requirePlayer }, async (request) => {
+    const game = resolveGame(request);
+    return { save: await readCloudSave(deps.pool, game.gameId, currentPlayer(request)) };
+  });
+
+  /** Replaces the cloud save if it is still at baseRevision; otherwise answers 409 with the newer save. */
+  app.put('/v1/games/:gameId/save', { onRequest: requirePlayer, config: playerWriteLimit }, async (request, reply) => {
+    const game = resolveGame(request);
+    const body = saveBodySchema.safeParse(request.body);
+    if (!body.success) throw badRequest(`baseRevision (a revision or null) and data (at most ${MAX_SAVE_LENGTH} characters) are required`);
+    const result = await writeCloudSave(deps.pool, { gameId: game.gameId, playerId: currentPlayer(request), ...body.data });
+    if (result.status === 'saved') return { save: result.save };
+    return reply.status(409).send({
+      error: { code: 'save_conflict', message: 'The cloud save changed since this device read it.', retryable: false },
+      save: result.current,
+    });
+  });
+
+  /** Deletes the player's cloud save and account data for this game (purchase records stay). */
+  app.delete('/v1/games/:gameId/player', { onRequest: requirePlayer, config: playerWriteLimit }, async (request) => {
+    const game = resolveGame(request);
+    await deletePlayerData(deps.pool, game.gameId, currentPlayer(request));
+    return { deleted: true };
   });
 
   /** Pub/Sub push endpoint for Google Play real-time developer notifications. */

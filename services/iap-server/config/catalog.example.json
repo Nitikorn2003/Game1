@@ -4,10 +4,86 @@
       "gameId": "game1",
       "packageName": "com.example.game1",
       "products": [
-        { "productId": "gems_100", "type": "consumable", "grants": { "gems": 100 } },
-        { "productId": "gems_550", "type": "consumable", "grants": { "gems": 550 } },
-        { "productId": "starter_pack", "type": "consumable", "grants": { "gems": 500, "coins": 1000 } },
-        { "productId": "remove_ads", "type": "non_consumable", "entitlement": "remove_ads" }
+        {
+          "productId": "gems_100",
+          "type": "consumable",
+          "grants": {
+            "gems": 100
+          }
+        },
+        {
+          "productId": "gems_550",
+          "type": "consumable",
+          "grants": {
+            "gems": 550
+          }
+        },
+        {
+          "productId": "starter_pack",
+          "type": "consumable",
+          "grants": {
+            "gems": 500,
+            "coins": 1000
+          }
+        },
+        {
+          "productId": "remove_ads",
+          "type": "non_consumable",
+          "entitlement": "remove_ads"
+        }
+      ]
+    },
+    {
+      "gameId": "lodelings",
+      "packageName": "com.example.lodelings",
+      "products": [
+        {
+          "productId": "gems_small",
+          "type": "consumable",
+          "grants": {
+            "gems": 100
+          }
+        },
+        {
+          "productId": "gems_medium",
+          "type": "consumable",
+          "grants": {
+            "gems": 550
+          }
+        },
+        {
+          "productId": "gems_large",
+          "type": "consumable",
+          "grants": {
+            "gems": 1200
+          }
+        },
+        {
+          "productId": "gems_huge",
+          "type": "consumable",
+          "grants": {
+            "gems": 2600
+          }
+        },
+        {
+          "productId": "starter_pack",
+          "type": "non_consumable",
+          "entitlement": "starter_pack",
+          "grants": {
+            "gems": 300,
+            "egg_prism": 1
+          }
+        },
+        {
+          "productId": "remove_ads",
+          "type": "non_consumable",
+          "entitlement": "remove_ads"
+        },
+        {
+          "productId": "ore_doubler",
+          "type": "non_consumable",
+          "entitlement": "ore_doubler"
+        }
       ]
     }
   ]

@@ -5,6 +5,8 @@ import { createPool, type Pool } from '../../src/db/pool.js';
 export const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL ?? 'postgres://postgres@127.0.0.1:54329/iap_test';
 
 const TABLES = [
+  'cloud_saves',
+  'wallet_settlements',
   'play_purchase_events',
   'wallet_ledger',
   'wallet_balances',

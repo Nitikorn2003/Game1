@@ -25,6 +25,7 @@ export const TEST_CATALOG = {
         { productId: 'gems_100', type: 'consumable', grants: { gems: 100 } },
         { productId: 'starter_pack', type: 'consumable', grants: { gems: 500, coins: 1000 } },
         { productId: 'remove_ads', type: 'non_consumable', entitlement: 'remove_ads' },
+        { productId: 'founder_bundle', type: 'non_consumable', entitlement: 'founder', grants: { gems: 300, eggs: 1 } },
       ],
     },
     {
@@ -95,6 +96,7 @@ export const LOG_ERROR = 50;
 export interface HarnessOptions {
   policy?: Partial<PurchasePolicy>;
   verifyRateLimitPerMinute?: number;
+  playerWriteRateLimitPerMinute?: number;
   playTimeoutMs?: number;
   rtdnExpectedSubscription?: string;
 }
@@ -202,6 +204,7 @@ export class Harness {
       }),
       ...(options.rtdnExpectedSubscription ? { rtdnExpectedSubscription: options.rtdnExpectedSubscription } : {}),
       verifyRateLimitPerMinute: options.verifyRateLimitPerMinute ?? 10_000,
+      playerWriteRateLimitPerMinute: options.playerWriteRateLimitPerMinute ?? 10_000,
       logger,
     });
     await this.app.ready();
@@ -248,7 +251,7 @@ export class Harness {
   }
 
   async call(
-    method: 'GET' | 'POST',
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE',
     url: string,
     opts: { playerId?: string; authorization?: string; body?: unknown; headers?: Record<string, string> } = {},
   ): Promise<ApiResponse> {
@@ -275,6 +278,14 @@ export class Harness {
       playerId,
       body: { productId, purchaseToken },
     });
+  }
+
+  settle(playerId: string, settlementId: string, gameId = 'game1'): Promise<ApiResponse> {
+    return this.call('POST', `/v1/games/${gameId}/wallet/settlements`, { playerId, body: { settlementId } });
+  }
+
+  putSave(playerId: string, baseRevision: number | null, data: string, gameId = 'game1'): Promise<ApiResponse> {
+    return this.call('PUT', `/v1/games/${gameId}/save`, { playerId, body: { baseRevision, data } });
   }
 
   async billingAccount(playerId: string, gameId = 'game1'): Promise<string> {

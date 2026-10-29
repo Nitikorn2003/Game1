@@ -65,7 +65,8 @@ export function evaluatePurchase(
 }
 
 export function grantSpecFor(product: ProductConfig): GrantSpec {
-  return product.type === 'consumable' ? { currency: { ...product.grants } } : { entitlement: product.entitlement };
+  if (product.type === 'consumable') return { currency: { ...product.grants } };
+  return product.grants ? { entitlement: product.entitlement, currency: { ...product.grants } } : { entitlement: product.entitlement };
 }
 
 /**

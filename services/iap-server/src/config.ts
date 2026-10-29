@@ -41,6 +41,8 @@ const envSchema = z.object({
 
   RUN_BACKGROUND_JOBS: booleanString.default(true),
   VERIFY_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(1).max(10_000).default(30),
+  /** Per player: wallet settlements, cloud save writes and data deletion. */
+  PLAYER_WRITE_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(1).max(10_000).default(120),
 });
 
 export type AppConfig = ReturnType<typeof loadConfig>;
