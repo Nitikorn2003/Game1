@@ -4,7 +4,7 @@
  */
 import { exportSave, localDayKey } from '@game1/engine';
 import type { Page } from '@playwright/test';
-import type { StoreConfig } from '../../../tools/store-assets.js';
+import type { StoreScreen } from '../../../tools/store-assets.js';
 import { ATTENTIVE, newBotGame, playActive } from '../src/sim/bot.js';
 import { speciesOf, type EggKind, type Rarity } from '../src/sim/content.js';
 import * as R from '../src/sim/rules.js';
@@ -68,64 +68,59 @@ async function scrollPanel(page: Page, pixels: number): Promise<void> {
   }, pixels);
 }
 
-const config: StoreConfig = {
-  locales: ['en', 'th'],
-  screens: [
-    {
-      name: 'mine',
-      show: async (page, url) => {
-        await openWith(page, url, playedFor(30));
-        await tap(page, 4);
-      },
+export const SCREENS: readonly StoreScreen[] = [
+  {
+    name: 'mine',
+    show: async (page, url) => {
+      await openWith(page, url, playedFor(30));
+      await tap(page, 4);
     },
-    {
-      name: 'guardian',
-      show: async (page, url) => {
-        const state = playedFor(30);
-        // A few seconds into the next Guardian fight, with the Guardian well hurt.
-        state.depth = Math.ceil((state.depth + 1) / 5) * 5;
-        state.maxDepth = Math.max(state.maxDepth, state.depth);
-        R.startGuardian(state, R.ctx(state.lastSeenAt, localDayKey(state.lastSeenAt, 0)));
-        state.hp = (state.guardian?.maxHp ?? 0) * 0.42;
-        await openWith(page, url, state);
-        await tap(page, 4);
-      },
+  },
+  {
+    name: 'guardian',
+    show: async (page, url) => {
+      const state = playedFor(30);
+      // A few seconds into the next Guardian fight, with the Guardian well hurt.
+      state.depth = Math.ceil((state.depth + 1) / 5) * 5;
+      state.maxDepth = Math.max(state.maxDepth, state.depth);
+      R.startGuardian(state, R.ctx(state.lastSeenAt, localDayKey(state.lastSeenAt, 0)));
+      state.hp = (state.guardian?.maxHp ?? 0) * 0.42;
+      await openWith(page, url, state);
+      await tap(page, 4);
     },
-    {
-      name: 'hatch',
-      show: async (page, url) => {
-        const state = playedFor(30);
-        readyEgg(state, 'prism', 'legendary');
-        await openWith(page, url, state);
-        await page.getByTestId('tab-eggs').click();
-        await page.getByTestId('hatch-0').click();
-        await page.getByTestId('hatch-headline').waitFor();
-        await page.waitForTimeout(1000);
-      },
+  },
+  {
+    name: 'hatch',
+    show: async (page, url) => {
+      const state = playedFor(30);
+      readyEgg(state, 'prism', 'legendary');
+      await openWith(page, url, state);
+      await page.getByTestId('tab-eggs').click();
+      await page.getByTestId('hatch-0').click();
+      await page.getByTestId('hatch-headline').waitFor();
+      await page.waitForTimeout(1000);
     },
-    {
-      name: 'lodelings',
-      show: async (page, url) => {
-        await openWith(page, url, playedFor(30));
-        await page.getByTestId('tab-lodelings').click();
-        await scrollPanel(page, 150);
-      },
+  },
+  {
+    name: 'lodelings',
+    show: async (page, url) => {
+      await openWith(page, url, playedFor(30));
+      await page.getByTestId('tab-lodelings').click();
+      await scrollPanel(page, 150);
     },
-    {
-      name: 'eggs',
-      show: async (page, url) => {
-        await openWith(page, url, playedFor(30));
-        await page.getByTestId('tab-eggs').click();
-      },
+  },
+  {
+    name: 'eggs',
+    show: async (page, url) => {
+      await openWith(page, url, playedFor(30));
+      await page.getByTestId('tab-eggs').click();
     },
-    {
-      name: 'relics',
-      show: async (page, url) => {
-        await openWith(page, url, playedFor(30));
-        await page.getByTestId('tab-relics').click();
-      },
+  },
+  {
+    name: 'relics',
+    show: async (page, url) => {
+      await openWith(page, url, playedFor(30));
+      await page.getByTestId('tab-relics').click();
     },
-  ],
-};
-
-export default config;
+  },
+];

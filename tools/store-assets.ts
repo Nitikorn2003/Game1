@@ -1,15 +1,15 @@
 /**
  * Draws a game's Android launcher icon and splash icon, its Google Play graphics and its store
- * screenshots, all from the game's own code and art:
+ * screenshots, all from the game's own code and art, and writes out its store listing:
  *
  *   npx tsx tools/store-assets.ts games/<game> [android] [store] [screens]
  *
  * With no part named it makes all three. The game provides `store/art.html` (drawn with
- * `renderStoreArt` from `@game1/ui/store-art`) and `store/screens.ts` (a `StoreConfig` as its
+ * `renderStoreArt` from `@game1/ui/store-art`) and `store/store.ts` (a `StoreConfig` as its
  * default export). Icons go into the game's Android resources, which are committed; Play Store
- * graphics and screenshots go into the git-ignored `store/out/`.
+ * graphics, screenshots and listing text go into the git-ignored `store/out/`.
  */
-import { mkdirSync, rmSync } from 'node:fs';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type { Browser, Page } from '@playwright/test';
@@ -21,11 +21,119 @@ export interface StoreScreen {
   show: (page: Page, url: string) => Promise<void>;
 }
 
+/** What Play Console asks for in each listing language, within its length limits. */
+export interface StoreListing {
+  title: string;
+  shortDescription: string;
+  fullDescription: string;
+  /** The in-app products as Play Console lists them. */
+  products: readonly { id: string; name: string; description: string }[];
+}
+
+/** The privacy policy in one language, as the game shows it. */
+export interface PrivacyPolicy {
+  title: string;
+  /** For example "Updated 2026-10-29". */
+  updated: string;
+  /** `id` is the same in every language; the page's address for a section ends in #<locale>-<id>. */
+  sections: readonly { id: string; heading: string; body: string }[];
+}
+
 export interface StoreConfig {
-  /** The listing languages, as the game's locale codes; each gets its own graphics. */
+  /** The listing languages, as the game's locale codes; each gets its own graphics and text. */
   locales: readonly string[];
+  listing: (locale: string) => StoreListing;
+  privacy: (locale: string) => PrivacyPolicy;
   /** Two to eight phone screenshots, in the order Google Play shows them. */
   screens: readonly StoreScreen[];
+}
+
+/** Play Console's limits, counted the way its text fields count: every Thai vowel and tone mark is one. */
+export const LIMITS = { title: 30, shortDescription: 80, fullDescription: 4000, productName: 55, productDescription: 200 } as const;
+
+/** Words Google Play does not allow in a title or short description, and markup it strips. */
+const BANNED = /\b(free|best|top|#1|no\. ?1|new|sale|discount|download|install now)\b|[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]|<[a-z]/iu;
+
+/** What would make Play Console refuse the listing, or what Google's metadata policy forbids. */
+export function listingProblems(listing: StoreListing): string[] {
+  const problems: string[] = [];
+  const check = (what: string, text: string, max: number) => {
+    if (text.trim() === '') problems.push(`${what} is empty`);
+    if (text.length > max) problems.push(`${what} has ${String(text.length)} characters, over ${String(max)}`);
+  };
+  check('title', listing.title, LIMITS.title);
+  check('short description', listing.shortDescription, LIMITS.shortDescription);
+  check('full description', listing.fullDescription, LIMITS.fullDescription);
+  for (const text of [listing.title, listing.shortDescription]) {
+    const banned = BANNED.exec(text);
+    if (banned) problems.push(`"${banned[0]}" in "${text}"`);
+  }
+  for (const product of listing.products) {
+    check(`name of ${product.id}`, product.name, LIMITS.productName);
+    check(`description of ${product.id}`, product.description, LIMITS.productDescription);
+  }
+  return problems;
+}
+
+function listingText(listing: StoreListing): string {
+  const products = listing.products.map((p) => `${p.id}\n  ${p.name}\n  ${p.description}`).join('\n');
+  return `TITLE\n${listing.title}\n\nSHORT DESCRIPTION\n${listing.shortDescription}\n\nFULL DESCRIPTION\n${listing.fullDescription}\n\nIN-APP PRODUCTS (id, name, description)\n${products}\n`;
+}
+
+const escapeHtml = (text: string) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+/** One page with the policy in every listing language, for the privacy policy address in Play Console. */
+export function privacyPage(config: StoreConfig): string {
+  const policies = config.locales.map((locale) => ({ locale, ...config.privacy(locale) }));
+  const first = policies[0];
+  if (!first) throw new Error('A store config needs at least one locale.');
+  const switcher = policies.length > 1 ? `<nav>${policies.map((p) => `<a href="#${p.locale}" lang="${p.locale}">${escapeHtml(p.title)}</a>`).join(' · ')}</nav>` : '';
+  const articles = policies.map(
+    (p) =>
+      `<article id="${p.locale}" lang="${p.locale}"><h1>${escapeHtml(p.title)}</h1><p class="updated">${escapeHtml(p.updated)}</p>${p.sections
+        .map((section) => `<section id="${p.locale}-${section.id}"><h2>${escapeHtml(section.heading)}</h2><p>${escapeHtml(section.body)}</p></section>`)
+        .join('')}</article>`,
+  );
+  return `<!doctype html>
+<html lang="${first.locale}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${escapeHtml(first.title)}</title>
+<style>
+:root { color-scheme: light dark; --text: #1d1a17; --dim: #6b625a; --bg: #fffdf9; --line: #e8e0d6; }
+@media (prefers-color-scheme: dark) { :root { --text: #f3ece4; --dim: #b3a89c; --bg: #15110f; --line: #3a312b; } }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 system-ui, 'Noto Sans Thai', 'Leelawadee UI', sans-serif; }
+main { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; }
+nav { margin-bottom: 8px; color: var(--dim); }
+nav a { color: inherit; }
+article + article { margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--line); }
+h1 { font-size: 1.6em; line-height: 1.25; margin: 0 0 4px; }
+h2 { font-size: 1.1em; margin: 24px 0 4px; }
+p { margin: 0; }
+.updated { color: var(--dim); font-size: 0.9em; }
+</style>
+</head>
+<body>
+<main>${switcher}${articles.join('')}</main>
+</body>
+</html>
+`;
+}
+
+function writeListings(game: string, config: StoreConfig): void {
+  for (const locale of config.locales) {
+    const listing = config.listing(locale);
+    const problems = listingProblems(listing);
+    if (problems.length > 0) throw new Error(`The ${locale} listing: ${problems.join('; ')}`);
+    const file = join(game, 'store/out', locale, 'listing.txt');
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, listingText(listing));
+    console.log(relative(game, file));
+  }
+  const page = join(game, 'store/out/privacy.html');
+  writeFileSync(page, privacyPage(config));
+  console.log(relative(game, page));
 }
 
 export interface Asset {
@@ -116,7 +224,7 @@ async function main(): Promise<void> {
   }
   const want = (part: string) => parts.length === 0 || parts.includes(part);
   const game = resolve(dir);
-  const config = ((await import(pathToFileURL(join(game, 'store/screens.ts')).href)) as { default: StoreConfig }).default;
+  const config = ((await import(pathToFileURL(join(game, 'store/store.ts')).href)) as { default: StoreConfig }).default;
   // Loaded here, so the tests can read the asset lists without starting a browser.
   const { chromium } = await import('@playwright/test');
   const { createServer } = await import('vite');
@@ -127,7 +235,10 @@ async function main(): Promise<void> {
   try {
     if (!url) throw new Error('The Vite dev server did not report its address.');
     if (want('android')) await drawAssets(browser, url, game, androidAssets());
-    if (want('store')) await drawAssets(browser, url, game, storeAssets(config.locales));
+    if (want('store')) {
+      writeListings(game, config);
+      await drawAssets(browser, url, game, storeAssets(config.locales));
+    }
     if (want('screens')) await takeScreenshots(browser, url, game, config);
   } finally {
     await browser.close();

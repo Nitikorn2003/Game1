@@ -207,6 +207,7 @@ export const en = {
   'settings.imported': 'Save loaded.',
   'settings.importFailed': 'That save could not be read.',
   'settings.privacy': 'Privacy policy',
+  'settings.privacyUpdated': 'Updated {date}',
   'settings.adChoices': 'Ad privacy choices',
   'settings.version': 'Version {version}',
   'settings.storageWarning': 'This browser is not keeping saves. Progress is lost when the page closes.',

@@ -681,7 +681,7 @@ export function ResurfaceModal(): JSX.Element {
 }
 
 export function PrivacyModal(): JSX.Element {
-  const { t, ui } = useView();
+  const { t, ui, locale } = useView();
   return (
     <Modal
       title={t('settings.privacy')}
@@ -691,10 +691,10 @@ export function PrivacyModal(): JSX.Element {
       closeLabel={t('common.close')}
       testId="privacy-modal"
     >
-      <div class="policy" lang="en">
-        <p class="small muted">Updated {PRIVACY_UPDATED}</p>
-        {PRIVACY_POLICY.map((section) => (
-          <section key={section.heading}>
+      <div class="policy">
+        <p class="small muted">{t('settings.privacyUpdated', { date: PRIVACY_UPDATED })}</p>
+        {PRIVACY_POLICY[locale].map((section) => (
+          <section key={section.id}>
             <h3>{section.heading}</h3>
             <p>{section.body}</p>
           </section>

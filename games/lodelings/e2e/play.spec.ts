@@ -116,6 +116,9 @@ test('the game speaks Thai', async ({ page }) => {
   await expect(page.getByTestId('tab-upgrades')).toContainText('อัปเกรด');
   await expect(page.getByTestId('depth')).toContainText('ชั้น 1');
   await expect(page.locator('html')).toHaveAttribute('lang', 'th');
+  await page.getByTestId('open-settings').click();
+  await page.getByTestId('open-privacy').click();
+  await expect(page.getByTestId('privacy-modal')).toContainText('เราคือใคร');
 });
 
 test('a Guardian fight can be lost, farmed and won', async ({ page }) => {
