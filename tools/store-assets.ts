@@ -238,7 +238,7 @@ async function main(): Promise<void> {
   // Loaded here, so the tests can read the asset lists without starting a browser.
   const { chromium } = await import('@playwright/test');
   const { createServer } = await import('vite');
-  const server = await createServer({ root: game, configFile: join(game, 'vite.config.ts'), logLevel: 'warn', server: { port: 4191 } });
+  const server = await createServer({ root: game, configFile: join(game, 'vite.config.ts'), logLevel: 'warn', server: { port: 4160 } });
   await server.listen();
   const url = server.resolvedUrls?.local[0];
   const browser = await chromium.launch();

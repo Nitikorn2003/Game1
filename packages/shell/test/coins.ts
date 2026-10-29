@@ -1,5 +1,5 @@
 import { ManualClock, MemoryStore, int, localDayKey, num, type SaveFormat } from '@game1/engine';
-import { TestStore, type AdOutcome, type AdsService, type CatalogItem, type StoreService } from '@game1/platform';
+import { TestStore, type CatalogItem, type StoreService } from '@game1/platform';
 import {
   Session,
   adsLeft,
@@ -17,6 +17,7 @@ import {
   type SessionState,
   type ShellKey,
 } from '../src/index.js';
+import { FakeAds, settle } from '../src/testing.js';
 
 /** The smallest game the shell can run: coins from a rewarded ad or a purchase, and time played. */
 export interface CoinState extends SessionState {
@@ -99,29 +100,7 @@ export class CoinGame extends Session<CoinState, ShellKey, 'coin' | 'cloud', Pla
   }
 }
 
-export class FakeAds implements AdsService {
-  readonly name = 'admob' as const;
-  next: AdOutcome = 'rewarded';
-  rewarded: string[] = [];
-  interstitials = 0;
-  init(): Promise<void> {
-    return Promise.resolve();
-  }
-  showRewarded(placement: string): Promise<AdOutcome> {
-    this.rewarded.push(placement);
-    return Promise.resolve(this.next);
-  }
-  showInterstitial(): Promise<boolean> {
-    this.interstitials += 1;
-    return Promise.resolve(true);
-  }
-  privacyOptionsRequired(): boolean {
-    return false;
-  }
-  showPrivacyOptions(): Promise<void> {
-    return Promise.resolve();
-  }
-}
+export { FakeAds, settle };
 
 export interface Rig {
   clock: ManualClock;
@@ -144,12 +123,4 @@ export async function started(r: Rig): Promise<CoinGame> {
   game.start();
   await settle(game);
   return game;
-}
-
-/** Lets pending saves and purchase syncs finish. */
-export async function settle(game: CoinGame): Promise<void> {
-  for (let i = 0; i < 5; i++) {
-    await game.syncPurchases(true);
-    await new Promise((resolve) => setTimeout(resolve, 0));
-  }
 }

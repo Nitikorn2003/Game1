@@ -1,0 +1,38 @@
+{
+  "name": "@game1/starter",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Starter: the smallest complete Game1 game. tools/new-game.ts copies it to begin a new game.",
+  "type": "module",
+  "config": {
+    "e2ePort": 4170
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "e2e": "vite build && playwright test",
+    "build:single": "vite build --mode single && tsx ../../tools/inline-html.ts dist-single dist-single/starter.html --title \"Starter Test Build\"",
+    "android:sync": "vite build && cap sync android",
+    "android:apk": "npm run android:sync && tsx ../../tools/gradlew.ts android assembleDebug",
+    "android:bundle": "npm run android:sync && tsx ../../tools/gradlew.ts android bundleRelease",
+    "android:open": "cap open android"
+  },
+  "dependencies": {
+    "@capacitor-community/admob": "8.2.1",
+    "@capacitor-firebase/authentication": "8.5.2",
+    "@capacitor/android": "8.5.3",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/core": "8.5.3",
+    "@fontsource/mitr": "5.3.0",
+    "@game1/capacitor-billing": "*",
+    "@game1/engine": "*",
+    "@game1/platform": "*",
+    "@game1/shell": "*",
+    "@game1/ui": "*",
+    "preact": "10.29.8"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.5.3"
+  }
+}

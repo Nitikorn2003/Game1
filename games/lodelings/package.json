@@ -4,11 +4,14 @@
   "private": true,
   "description": "Lodelings: an idle mining RPG. Dig through the Deep, hatch crystal creatures and beat the Guardians.",
   "type": "module",
+  "config": {
+    "e2ePort": 4180
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "e2e": "playwright test",
+    "e2e": "vite build && playwright test",
     "build:single": "vite build --mode single && tsx ../../tools/inline-html.ts dist-single dist-single/lodelings.html --title \"Lodelings Test Build\"",
     "android:sync": "vite build && cap sync android",
     "android:apk": "npm run android:sync && tsx ../../tools/gradlew.ts android assembleDebug",
@@ -25,6 +28,7 @@
     "@game1/capacitor-billing": "*",
     "@game1/engine": "*",
     "@game1/platform": "*",
+    "@game1/shell": "*",
     "@game1/ui": "*",
     "preact": "10.29.8"
   },

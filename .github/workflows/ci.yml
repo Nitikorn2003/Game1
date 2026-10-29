@@ -40,7 +40,9 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: e2e-results
-          path: games/*/test-results/
+          path: |
+            games/*/test-results/
+            templates/*/test-results/
           retention-days: 7
 
   iap-server:

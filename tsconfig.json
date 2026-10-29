@@ -11,6 +11,11 @@
     "games/*/e2e",
     "games/*/store",
     "games/*/*.ts",
+    "templates/*/src",
+    "templates/*/test",
+    "templates/*/e2e",
+    "templates/*/store",
+    "templates/*/*.ts",
     "tools/**/*.ts",
     "vitest.config.ts"
   ]

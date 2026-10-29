@@ -1,38 +1,12 @@
-import { ManualClock, MemoryStore, localDayKey, type FrameScheduler } from '@game1/engine';
-import { TestStore, noStore, type AdOutcome, type AdsService, type Settlement, type StoreService } from '@game1/platform';
+import { ManualClock, MemoryStore, localDayKey } from '@game1/engine';
+import { TestStore, noStore, type Settlement, type StoreService } from '@game1/platform';
+import { FakeAds, manualFrames, settle } from '@game1/shell/testing';
 import { describe, expect, it } from 'vitest';
 import { CATALOG } from '../src/catalog.js';
 import { Game, type GameOptions } from '../src/game.js';
 import * as C from '../src/sim/content.js';
 import * as R from '../src/sim/rules.js';
 import { T0 } from './helpers.js';
-
-/** The loop never runs by itself in tests; they call game.pump() after moving the clock. */
-const manualFrames: FrameScheduler = { request: () => 0, cancel: () => undefined };
-
-class FakeAds implements AdsService {
-  readonly name = 'admob' as const;
-  next: AdOutcome = 'rewarded';
-  rewarded: string[] = [];
-  interstitials = 0;
-  init(): Promise<void> {
-    return Promise.resolve();
-  }
-  showRewarded(placement: string): Promise<AdOutcome> {
-    this.rewarded.push(placement);
-    return Promise.resolve(this.next);
-  }
-  showInterstitial(): Promise<boolean> {
-    this.interstitials += 1;
-    return Promise.resolve(true);
-  }
-  privacyOptionsRequired(): boolean {
-    return false;
-  }
-  showPrivacyOptions(): Promise<void> {
-    return Promise.resolve();
-  }
-}
 
 interface Rig {
   clock: ManualClock;
@@ -61,14 +35,6 @@ async function started(r: Rig): Promise<Game> {
   game.start();
   await settle(game);
   return game;
-}
-
-/** Lets pending saves and purchase syncs finish. */
-async function settle(game: Game): Promise<void> {
-  for (let i = 0; i < 5; i++) {
-    await game.syncPurchases(true);
-    await new Promise((resolve) => setTimeout(resolve, 0));
-  }
 }
 
 function run(game: Game, clock: ManualClock, seconds: number): void {

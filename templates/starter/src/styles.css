@@ -1,0 +1,175 @@
+/* Starter: deep teal with a gold coin. A new game replaces these colours with its own. */
+:root {
+  --g1-bg: #0e1720;
+  --g1-surface: #16232f;
+  --g1-surface-2: #1f3140;
+  --g1-line: rgba(214, 240, 255, 0.12);
+  --g1-text: #eef7fb;
+  --g1-text-dim: #a9bfcc;
+  --g1-accent: #3fd0bd;
+  --g1-accent-ink: #032b26;
+  --g1-field-bg: #08121a;
+  color-scheme: dark;
+}
+
+html {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: #08121a;
+  overscroll-behavior: none;
+}
+body {
+  display: flex;
+  justify-content: center;
+}
+#app {
+  width: 100%;
+  max-width: 520px;
+  height: 100%;
+}
+.boot-error {
+  margin: 0;
+  padding: 40px 24px;
+  color: #eef7fb;
+  font: 500 17px/1.5 'Mitr', system-ui, sans-serif;
+  text-align: center;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.6);
+}
+
+.topbar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: max(6px, var(--g1-inset-top)) 8px 6px;
+  background: linear-gradient(#16232f, #0e1720);
+  border-bottom: 1px solid var(--g1-line);
+}
+.res {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 12px 3px 5px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 0 0 1px var(--g1-line);
+  font-weight: 600;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+.iconbtn {
+  appearance: none;
+  border: 0;
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--g1-surface-2);
+  color: var(--g1-text);
+  box-shadow: inset 0 0 0 1px var(--g1-line);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.iconbtn:focus-visible,
+.tap:focus-visible {
+  outline: 3px solid var(--g1-gem);
+  outline-offset: 2px;
+}
+
+.play {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 16px max(16px, var(--g1-inset-bottom));
+  overflow: auto;
+}
+.tap-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: radial-gradient(circle at 50% 45%, rgba(63, 208, 189, 0.18), transparent 60%);
+}
+.tap {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 12px;
+  border-radius: 50%;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 60ms ease;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.45));
+}
+.tap:active {
+  transform: scale(0.94);
+}
+.hint {
+  margin: 0;
+  color: var(--g1-text-dim);
+}
+
+.card {
+  background: var(--g1-surface);
+  border-radius: var(--g1-radius);
+  box-shadow: inset 0 0 0 1px var(--g1-line);
+  padding: 12px;
+}
+.upgrade {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.upgrade__body {
+  flex: 1;
+  min-width: 0;
+}
+.upgrade h3 {
+  margin: 0 0 2px;
+  font-size: 16px;
+  font-weight: 600;
+}
+.upgrade p {
+  margin: 0;
+}
+
+.offer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--g1-line);
+}
+.offer:first-of-type {
+  border-top: 0;
+}
+.offer__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.owned {
+  color: var(--g1-good);
+  font-weight: 600;
+  font-size: 14px;
+}

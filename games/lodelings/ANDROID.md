@@ -51,7 +51,8 @@ backslashes, for example `sdk.dir=C\:\\Users\\you\\AppData\\Local\\Android\\Sdk`
 
 Each service is optional on its own: the app works without it and leaves that part out.
 With only the AdMob settings, the app is the ads-only edition: its shop offers only ad
-rewards, and it needs no server (see [RELEASE.md](RELEASE.md) for choosing an edition).
+rewards, and it needs no server (see [docs/RELEASE.md](../../docs/RELEASE.md) for choosing an
+edition).
 Two files hold the settings, and git ignores both. Their committed `.example` files show
 every setting.
 
@@ -123,7 +124,8 @@ npm run android:bundle -w games/lodelings
 
 The bundle is `android/app/build/outputs/bundle/release/app-release.aab`. Upload it to an
 internal testing track first. A release build warns when it still uses Google's test AdMob
-app id. [RELEASE.md](RELEASE.md) walks through Play Console from there.
+app id. [docs/RELEASE.md](../../docs/RELEASE.md) walks through Play Console from there, and
+[RELEASE.md](RELEASE.md) has this game's answers for it.
 
 ## Icon and launch screen
 

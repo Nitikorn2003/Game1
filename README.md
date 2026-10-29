@@ -6,6 +6,7 @@ purchases verified on a server.
 | Path | What it is |
 | --- | --- |
 | [`games/lodelings`](games/lodelings) | **Lodelings**, an idle mining RPG: tap through the Deep, hatch and level crystal creatures, beat a Guardian every five depths, resurface for relics. English and Thai. Browser version for testing, Android app through Capacitor. [Android build](games/lodelings/ANDROID.md), [Google Play release](games/lodelings/RELEASE.md). |
+| [`templates/starter`](templates/starter) | **Starter**, the smallest complete game (tap a coin, buy upgrades, a rewarded ad, two products), with its Android project, store files and tests. `tools/new-game.ts` copies it to start a new game: see [the framework](docs/FRAMEWORK.md). |
 | [`packages/engine`](packages/engine) | Game-agnostic core: fixed-step loop, clocks, versioned saves with checksums, seeded random numbers, economy math, number formatting, daily resets, i18n. |
 | [`packages/platform`](packages/platform) | Device services behind small interfaces: storage, ads (test ads, AdMob with Google's consent form), purchases (test store, Google Play through the purchase server), sign-in (Firebase), cloud saves, haptics. |
 | [`packages/ui`](packages/ui) | Preact building blocks: buttons, panels, tabs, modals, toasts, the Android back button, and the store art renderer. |
@@ -13,14 +14,14 @@ purchases verified on a server.
 | [`packages/capacitor-billing`](packages/capacitor-billing) | The Capacitor plugin that connects a game's Android app to Google Play Billing. |
 | [`services/iap-server`](services/iap-server) | Purchase server: verifies Google Play purchases, keeps an idempotent ledger, consumes and acknowledges purchases, takes back refunds, and stores cloud saves. Node.js, TypeScript, PostgreSQL. |
 | [`clients/android`](clients/android) | The Android purchase client the billing plugin compiles in (Play Billing Library 9.1.0). Kotlin. |
-| [`tools`](tools) | `store-assets.ts` draws a game's launcher icons, splash icon, store graphics and screenshots and writes its listing and privacy page; `gradlew.ts`, `inline-html.ts`, and the Lodelings balance scripts. |
-| [`docs/iap`](docs/iap) | [Security audit](docs/iap/SECURITY_AUDIT.md) of the purchase system and its [external setup checklist](docs/iap/PLAY_CONSOLE_SETUP.md). |
+| [`tools`](tools) | `new-game.ts` starts a game from the template; `store-assets.ts` draws a game's launcher icons, splash icon, store graphics and screenshots and writes its listing and privacy page; `gradlew.ts`, `inline-html.ts`, and the Lodelings balance scripts. |
+| [`docs`](docs) | [How the framework fits together and how to make a new game](docs/FRAMEWORK.md), [releasing a game on Google Play](docs/RELEASE.md), the [security audit](docs/iap/SECURITY_AUDIT.md) of the purchase system and its [external setup checklist](docs/iap/PLAY_CONSOLE_SETUP.md). |
 
 **Status: not released.** The games and the server are tested here (below), but no Android
 build has been made yet, because this environment cannot download Google's Android
 libraries, and no real Google Play purchase has gone through the server. The first Android
 build runs on a computer with Android Studio or in CI. Publishing needs a Google Play
-developer account and the steps in [RELEASE.md](games/lodelings/RELEASE.md).
+developer account and the steps in [docs/RELEASE.md](docs/RELEASE.md).
 
 ## Working on the games
 

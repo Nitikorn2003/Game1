@@ -1,4 +1,4 @@
-/** What tools/store-assets.ts makes for Lodelings' Google Play listing. */
+/** What tools/store-assets.ts makes for the game's Google Play listing. */
 import type { StoreConfig } from '../../../tools/store-assets.js';
 import { LOCALES, translator, type Locale } from '../src/i18n/index.js';
 import { PRIVACY_POLICY, PRIVACY_UPDATED } from '../src/privacy.js';

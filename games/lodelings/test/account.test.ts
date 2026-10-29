@@ -1,13 +1,12 @@
-import { ManualClock, MemoryStore, localDayKey, type FrameScheduler } from '@game1/engine';
+import { ManualClock, MemoryStore, localDayKey } from '@game1/engine';
 import { TestStore, type AdsService, type AuthService, type CloudSave, type LinkResult, type SaveWrite, type StoreService } from '@game1/platform';
+import { manualFrames } from '@game1/shell/testing';
 import { describe, expect, it } from 'vitest';
 import { CATALOG } from '../src/catalog.js';
 import { Game, type AccountOptions } from '../src/game.js';
 import * as C from '../src/sim/content.js';
 import * as R from '../src/sim/rules.js';
 import { T0 } from './helpers.js';
-
-const manualFrames: FrameScheduler = { request: () => 0, cancel: () => undefined };
 
 const noAds: AdsService = {
   name: 'admob',

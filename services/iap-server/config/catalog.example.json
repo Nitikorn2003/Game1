@@ -85,6 +85,24 @@
           "entitlement": "ore_doubler"
         }
       ]
+    },
+    {
+      "gameId": "starter",
+      "packageName": "com.example.starter",
+      "products": [
+        {
+          "productId": "coins_small",
+          "type": "consumable",
+          "grants": {
+            "coins": 500
+          }
+        },
+        {
+          "productId": "remove_ads",
+          "type": "non_consumable",
+          "entitlement": "remove_ads"
+        }
+      ]
     }
   ]
 }
