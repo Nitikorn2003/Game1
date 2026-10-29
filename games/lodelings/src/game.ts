@@ -428,7 +428,7 @@ export class Game {
     } else if (result.status === 'pending') {
       this.toast('shop.pending');
     } else if (result.status === 'failed') {
-      this.toast('shop.failed');
+      this.toast(result.reason === 'already_owned' ? 'shop.alreadyOwned' : 'shop.failed');
     }
     this.emitChange();
     return result;

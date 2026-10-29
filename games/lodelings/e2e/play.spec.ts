@@ -94,6 +94,18 @@ test('a test purchase shows that no money is charged and delivers gems once', as
   await expect.poll(() => shownNumber(page, 'gems')).toBe(gems + 100);
 });
 
+test('typing in a screen keeps the cursor there, and Escape closes the screen', async ({ page }) => {
+  await openGame(page);
+  await page.getByTestId('open-settings').click();
+  await page.getByTestId('import-save').click();
+  await page.getByTestId('import-text').click();
+  await page.keyboard.type('L1:abc');
+  await expect(page.getByTestId('import-text')).toHaveValue('L1:abc');
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('import-text')).toBeHidden();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+});
+
 test('the game speaks Thai', async ({ page }) => {
   await openGame(page);
   await page.getByTestId('open-settings').click();

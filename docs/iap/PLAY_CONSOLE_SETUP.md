@@ -11,8 +11,8 @@ page named in brackets.
 
 1. Create the app. Its package name must equal `packageName` in the server catalog.
 2. Upload a build that includes Google Play Billing Library 9.1.0 to the internal testing
-   track. Play Console only lets you create products once a build with the billing library
-   is uploaded.
+   track (for Lodelings, `games/lodelings/ANDROID.md` explains the build). Play Console only
+   lets you create products once a build with the billing library is uploaded.
 3. Create the one-time products under Monetize with Play, Products, One-time products. The
    product ids must match the catalog exactly (`gems_100`, `remove_ads`, ...). Give each one
    a "buy" purchase option. The server refuses rentals.
@@ -76,6 +76,8 @@ In Firebase Authentication, turn on the **Anonymous** and **Google** sign-in pro
 player starts as a guest and can link Google later.
 
 The Android client passes the current ID token through `HttpPurchaseBackend(sessionToken = ...)`.
+In the games, the Game1Billing plugin (`packages/capacitor-billing`) does this with the token
+the game hands it.
 
 ## 5. Hosting
 

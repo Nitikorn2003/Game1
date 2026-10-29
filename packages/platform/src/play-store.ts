@@ -50,20 +50,24 @@ export class PlayStore implements StoreService {
     private readonly options: PlayStoreOptions,
   ) {}
 
-  /** Connects the plugin and finishes purchases left over from earlier sessions. */
+  /** Connects the plugin, then finishes purchases left over from earlier sessions. */
   start(): Promise<void> {
-    this.started ??= (async () => {
-      await this.billing.configure({ baseUrl: this.options.baseUrl, gameId: this.options.gameId });
-      await this.billing.addListener('purchaseEvent', (event) => {
-        this.onEvent(event);
-      });
-      await this.restore();
-    })();
+    if (!this.started) {
+      this.started = (async () => {
+        await this.billing.configure({ baseUrl: this.options.baseUrl, gameId: this.options.gameId });
+        await this.billing.addListener('purchaseEvent', (event) => {
+          this.onEvent(event);
+        });
+      })();
+      // While the server is unreachable a held purchase takes minutes; prices and new purchases do not wait for it.
+      this.restore().catch(() => undefined);
+    }
     return this.started;
   }
 
   /** Also call when the app returns to the foreground: a pending payment may have cleared. */
   async restore(): Promise<void> {
+    await this.start();
     if (await this.syncToken(false)) await this.billing.restore();
   }
 

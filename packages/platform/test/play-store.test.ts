@@ -65,11 +65,29 @@ afterEach(() => {
 });
 
 describe('Google Play purchases', () => {
-  it('connects the plugin, signs it in and finishes held purchases first', async () => {
+  it('connects the plugin, signs it in and finishes held purchases', async () => {
     const billing = new FakeBilling();
     await store(billing).start();
-    expect(billing.calls).toEqual(['configure https://iap.test lodelings', 'restore']);
+    await vi.waitFor(() => {
+      expect(billing.calls).toEqual(['configure https://iap.test lodelings', 'restore']);
+    });
     expect(billing.tokens).toEqual(['token']);
+  });
+
+  it('shows prices and opens the purchase sheet while held purchases are still being finished', async () => {
+    vi.useFakeTimers();
+    const billing = new FakeBilling();
+    // The server is unreachable, so the plugin keeps retrying the held purchase.
+    billing.restore = () => {
+      billing.calls.push('restore');
+      return new Promise<void>(() => undefined);
+    };
+    const s = store(billing);
+    expect(await s.products(['gems_small'])).toEqual([{ id: 'gems_small', kind: 'consumable', price: '฿10' }]);
+    const bought = s.purchase('gems_small');
+    await vi.advanceTimersByTimeAsync(20);
+    expect(await bought).toEqual({ status: 'granted' });
+    expect(billing.calls.toSorted()).toEqual(['configure https://iap.test lodelings', 'purchase gems_small', 'query gems_small', 'restore']);
   });
 
   it('shows Google Play prices and marks products Play cannot price', async () => {

@@ -1,0 +1,67 @@
+// The Game1Billing Capacitor plugin. `npx cap sync` adds it to each game's Android app.
+
+buildscript {
+    // Kotlin 2.2.20 is what @capacitor-community/admob builds with; apps set the same in their root build.gradle.
+    ext.kotlin_version = project.hasProperty('kotlin_version') ? rootProject.ext.kotlin_version : '2.2.20'
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.13.0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+// The purchase logic and the Play Billing adapter, compiled into this plugin from their one copy.
+def billingClient = file('../../../clients/android')
+
+android {
+    namespace = 'com.game1.billing.capacitor'
+    compileSdk = project.hasProperty('compileSdkVersion') ? rootProject.ext.compileSdkVersion : 36
+    defaultConfig {
+        // Play Billing Library 9 needs Android 6.0 (API 23); Capacitor 8 needs API 24.
+        minSdkVersion project.hasProperty('minSdkVersion') ? rootProject.ext.minSdkVersion : 24
+        consumerProguardFiles "$billingClient/billing-play/consumer-rules.pro"
+    }
+    sourceSets {
+        main.java.srcDirs += ["$billingClient/billing-core/src/main/kotlin", "$billingClient/billing-play/src/main/kotlin"]
+        // Their tests run here too, against the library versions the app ships with.
+        test.java.srcDirs += ["$billingClient/billing-core/src/test/kotlin", "$billingClient/billing-play/src/test/kotlin"]
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
+    testOptions {
+        unitTests.all { useJUnitPlatform() }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
+    }
+}
+
+repositories {
+    google()
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':capacitor-android')
+    implementation 'com.android.billingclient:billing:9.1.0'
+    // The newest releases that Kotlin 2.2 can compile against (clients/android builds alone with newer ones).
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2'
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0'
+
+    testImplementation "org.jetbrains.kotlin:kotlin-test-junit5:$kotlin_version"
+    testImplementation platform('org.junit:junit-bom:5.14.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2'
+}

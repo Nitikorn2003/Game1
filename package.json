@@ -33,5 +33,10 @@
   },
   "dependencies": {
     "preact": "10.29.8"
+  },
+  "overrides": {
+    "xcode": {
+      "uuid": "11.1.1"
+    }
   }
 }

@@ -1,0 +1,11 @@
+{
+  "name": "@game1/capacitor-billing",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The Game1Billing Capacitor plugin: Google Play purchases for the games' Android apps, through the purchase client in clients/android and the purchase server.",
+  "capacitor": {
+    "android": {
+      "src": "android"
+    }
+  }
+}

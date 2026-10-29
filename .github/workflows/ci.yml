@@ -127,3 +127,36 @@ jobs:
         with:
           cache-provider: basic
       - run: ./gradlew :billing-play:assembleRelease :billing-play:testDebugUnitTest --console=plain
+
+  lodelings-android:
+    name: Lodelings Android app
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
+      - run: npm ci
+      # No google-services.json or release settings here: test ads, no sign-in or purchases.
+      - name: Build the debug app
+        run: npm run android:apk -w games/lodelings
+      - name: Billing plugin and purchase client tests
+        working-directory: games/lodelings/android
+        run: ./gradlew :game1-capacitor-billing:testDebugUnitTest --console=plain
+      - uses: actions/upload-artifact@v6
+        with:
+          name: lodelings-debug-apk
+          path: games/lodelings/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14

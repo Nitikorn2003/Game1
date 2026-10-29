@@ -166,6 +166,27 @@ describe('the game controller', () => {
     expect(game.state.shop.pending).toBeNull();
   });
 
+  it('says when Google Play already has the item, and otherwise that nothing was charged', async () => {
+    const r = rig();
+    let reason = 'already_owned';
+    const real = r.store;
+    const store: StoreService = {
+      name: 'test',
+      products: (ids) => real.products(ids),
+      purchase: () => Promise.resolve({ status: 'failed', reason, retryable: true }),
+      wallet: () => real.wallet(),
+      onChange: (listener) => real.onChange(listener),
+      settle: (id) => real.settle(id),
+    };
+    const game = await started(rig({ clock: r.clock, storage: r.storage, store }));
+    const toasts: string[] = [];
+    game.events.on('toast', (toast) => toasts.push(toast.key));
+    await game.purchase('gems_small');
+    reason = 'billing_6';
+    await game.purchase('gems_small');
+    expect(toasts).toEqual(['shop.alreadyOwned', 'shop.failed']);
+  });
+
   it('keeps a purchase that was paid while the app died before it was delivered', async () => {
     const r = rig();
     const real = new TestStore(CATALOG, r.storage, { ask: () => Promise.resolve('buy') });

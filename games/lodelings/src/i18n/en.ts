@@ -150,6 +150,7 @@ export const en = {
   'shop.pending': 'Payment pending. Your items arrive as soon as it clears.',
   'shop.thanks': 'Thank you! Your items have arrived.',
   'shop.failed': 'The purchase did not go through. You were not charged.',
+  'shop.alreadyOwned': 'Google Play says this Google account already bought this item.',
   'shop.needsGoogle': 'Links your Google account first',
   'shop.linkNeeded': 'One-time purchases need a linked Google account, so they are never lost with your phone.',
   'shop.linkExisting': 'This Google account already has a save. Switch to it in Settings, then buy.',

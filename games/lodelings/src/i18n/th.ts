@@ -135,6 +135,7 @@ export const th: Partial<Record<StringKey, string>> = {
   'shop.pending': 'รอการชำระเงิน ของจะเข้าทันทีที่ชำระสำเร็จ',
   'shop.thanks': 'ขอบคุณ! ได้รับของแล้ว',
   'shop.failed': 'การซื้อไม่สำเร็จ ไม่มีการเรียกเก็บเงิน',
+  'shop.alreadyOwned': 'Google Play แจ้งว่าบัญชี Google นี้ซื้อรายการนี้ไว้แล้ว',
   'shop.needsGoogle': 'ต้องเชื่อมบัญชี Google ก่อนซื้อ',
   'shop.linkNeeded': 'การซื้อแบบครั้งเดียวต้องเชื่อมบัญชี Google ก่อน เพื่อไม่ให้หายไปพร้อมกับเครื่อง',
   'shop.linkExisting': 'บัญชี Google นี้มีเซฟอยู่แล้ว สลับไปใช้บัญชีนั้นในการตั้งค่าก่อน แล้วค่อยซื้อ',

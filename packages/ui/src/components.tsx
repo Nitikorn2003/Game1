@@ -1,5 +1,6 @@
 import type { CSSProperties, ComponentChildren, JSX } from 'preact';
 import { useEffect, useRef } from 'preact/hooks';
+import { useBackHandler } from './back.js';
 import { useHoldRepeat } from './hooks.js';
 
 export type ButtonVariant = 'primary' | 'ghost' | 'gem' | 'ad' | 'good' | 'danger';
@@ -68,18 +69,20 @@ export interface ModalProps {
 export function Modal(props: ModalProps): JSX.Element {
   const box = useRef<HTMLDivElement>(null);
   const onClose = props.onClose;
+  // Back and Escape close the modal. A modal without a close button needs an answer, so they wait for it.
+  useBackHandler(() => {
+    onClose?.();
+    return true;
+  });
+  // Focus moves into the modal when it opens, and back when it closes. Once per modal, so that
+  // a re-render never pulls focus out of a field the player is typing in.
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
     box.current?.querySelector<HTMLElement>('button, [href], input')?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && onClose) onClose();
-    };
-    window.addEventListener('keydown', onKey);
     return () => {
-      window.removeEventListener('keydown', onKey);
       previous?.focus();
     };
-  }, [onClose]);
+  }, []);
   return (
     <div
       class="g1-modal-backdrop"
