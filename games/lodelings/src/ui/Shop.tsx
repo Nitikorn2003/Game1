@@ -3,7 +3,7 @@ import type { JSX } from 'preact';
 import { EggArt } from '../art/EggArt.js';
 import { Icon, type IconName } from '../art/Icon.js';
 import { GEM_PACKS, catalogItem, type GemPack, type Offer } from '../catalog.js';
-import { GEM_CRATE_GEMS, SKILL_IDS, SKILL_RESET_GEMS, type AdPlacement } from '../sim/content.js';
+import { EGGS, EGG_KINDS, GEM_CRATE_GEMS, SKILL_IDS, SKILL_RESET_GEMS, type AdPlacement, type EggKind } from '../sim/content.js';
 import * as R from '../sim/rules.js';
 import { useView } from './view.js';
 
@@ -41,6 +41,12 @@ function AdOffer(props: { placement: AdPlacement; icon: IconName; title: string;
   );
 }
 
+/** The eggs a product grants, from its catalog entry (grants such as egg_prism). */
+function eggsIn(id: string): EggKind[] {
+  const grants = catalogItem(id)?.grants ?? {};
+  return EGG_KINDS.filter((kind) => `egg_${kind}` in grants);
+}
+
 function priceOf(id: string, prices: ReadonlyMap<string, { price: string | null }>): string | null {
   return prices.get(id)?.price ?? null;
 }
@@ -64,6 +70,12 @@ function OfferCard(props: { id: Offer; owned: boolean }): JSX.Element {
             <Icon name="gem" size={14} /> {item.grants.gems}
           </div>
         )}
+        {/* What an egg can hatch is shown before it is bought, as Google Play requires for random items. */}
+        {eggsIn(props.id).map((kind) => (
+          <div class="small muted" key={kind} data-testid={`odds-${props.id}-${kind}`}>
+            {t(`egg.${kind}`)}: {t('eggs.odds', EGGS[kind].odds)}
+          </div>
+        ))}
         {!props.owned && game.needsGoogleFor(props.id) && <div class="small muted">{t('shop.needsGoogle')}</div>}
       </div>
       {props.owned ? (

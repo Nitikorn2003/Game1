@@ -78,6 +78,8 @@ test('a test ad pays only after its countdown', async ({ page }) => {
 test('a test purchase shows that no money is charged and delivers gems once', async ({ page }) => {
   await openGame(page);
   await page.getByTestId('tab-shop').click();
+  // A paid product with an egg in it shows what the egg can hatch before it is bought.
+  await expect(page.getByTestId('odds-starter_pack-prism')).toContainText('Legendary');
   const gems = await shownNumber(page, 'gems');
   await page.getByTestId('buy-gems_small').click();
   const dialog = page.getByTestId('test-purchase');
