@@ -1,0 +1,13 @@
+.DS_Store
+Thumbs.db
+
+# Secrets never belong in this public repository.
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.jks
+*.keystore
+*service-account*.json
+*credentials*.json

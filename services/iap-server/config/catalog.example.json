@@ -1,0 +1,14 @@
+{
+  "games": [
+    {
+      "gameId": "game1",
+      "packageName": "com.example.game1",
+      "products": [
+        { "productId": "gems_100", "type": "consumable", "grants": { "gems": 100 } },
+        { "productId": "gems_550", "type": "consumable", "grants": { "gems": 550 } },
+        { "productId": "starter_pack", "type": "consumable", "grants": { "gems": 500, "coins": 1000 } },
+        { "productId": "remove_ads", "type": "non_consumable", "entitlement": "remove_ads" }
+      ]
+    }
+  ]
+}
