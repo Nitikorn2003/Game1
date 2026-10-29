@@ -116,6 +116,13 @@ takes an advisory lock.
 `node dist/cli.js refund-rejected --purchase-id <id> --confirm` refunds and revokes one held
 purchase. It moves real money and cannot be undone.
 
+`node dist/cli.js delete-player --player <sign-in user id> --confirm` does what a game's
+Delete account button does, for players who ask by e-mail: it deletes their cloud saves,
+settlements and billing account ids in every game, and their Firebase sign-in account when
+`FIREBASE_PROJECT_ID` is set (otherwise delete it in Firebase Console). Purchase records stay,
+as the privacy policy says. Find the user id in Firebase Console, Authentication, by the
+player's e-mail address. It cannot be undone.
+
 ## Tests
 
 The tests run against a real PostgreSQL database and a local fake of the Google Play
