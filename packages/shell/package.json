@@ -1,0 +1,20 @@
+{
+  "name": "@game1/shell",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Everything around a Game1 game's gameplay: saving, purchases, ad rules, sign-in, cloud saves, settings, privacy policy, sound and start-up. A game adds only its own state, rules and screens.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./native": "./src/native.ts",
+    "./ui": "./src/ui/index.ts",
+    "./shell.css": "./src/ui/shell.css"
+  },
+  "dependencies": {
+    "@capacitor/core": "8.5.3",
+    "@game1/engine": "*",
+    "@game1/platform": "*",
+    "@game1/ui": "*",
+    "preact": "10.29.8"
+  }
+}

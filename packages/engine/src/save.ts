@@ -182,7 +182,7 @@ export class SaveSlots<T> {
   constructor(
     private readonly store: KeyValueStore,
     private readonly key: string,
-    private readonly format: SaveFormat<T>,
+    readonly format: SaveFormat<T>,
     private readonly clock: Clock,
   ) {}
 

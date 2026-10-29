@@ -1,4 +1,5 @@
 import type { CatalogItem } from '@game1/platform';
+import type { GameIdentity } from '@game1/shell';
 
 /**
  * Real-money products. The same ids must exist in Google Play Console and in the purchase
@@ -24,3 +25,6 @@ export type Offer = (typeof OFFERS)[number];
 export function catalogItem(id: string): CatalogItem | undefined {
   return CATALOG.find((p) => p.id === id);
 }
+
+/** The game to the purchase server (its id there and its catalog) and to the browser's storage. */
+export const GAME: GameIdentity = { gameId: 'lodelings', catalog: CATALOG, storagePrefix: 'lodelings:' };

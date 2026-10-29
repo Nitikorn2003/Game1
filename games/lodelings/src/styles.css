@@ -1115,55 +1115,6 @@ p {
   justify-content: space-between;
   background: linear-gradient(150deg, #24394a, var(--g1-surface) 70%);
 }
-.setting {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin: 8px 0;
-}
-.account {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin: 12px 0 4px;
-  padding-top: 12px;
-  border-top: 1px solid var(--g1-line);
-}
-.account h3 {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-}
-.account p {
-  margin: 0;
-}
-.account .row {
-  margin-top: 2px;
-}
-.savebox {
-  width: 100%;
-  height: 92px;
-  margin-top: 8px;
-  padding: 8px;
-  border-radius: 10px;
-  border: 1px solid var(--g1-line);
-  background: #0d0a08;
-  color: var(--g1-text);
-  font-family: ui-monospace, monospace;
-  font-size: 11px;
-  resize: none;
-  user-select: text;
-  -webkit-user-select: text;
-}
-.policy {
-  font-size: 13.5px;
-  line-height: 1.5;
-}
-.policy h3 {
-  margin: 14px 0 4px;
-  font-size: 15px;
-}
-
 /* Creature, egg and Guardian art */
 svg.lodeling,
 svg.egg,

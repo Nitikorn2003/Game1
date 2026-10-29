@@ -15,6 +15,13 @@
   --g1-radius: 14px;
   --g1-font: 'Mitr', 'Noto Sans Thai', 'Leelawadee UI', system-ui, sans-serif;
   --g1-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  /* Notes: a hint, and a warning (--bad). */
+  --g1-note-bg: rgba(255, 179, 71, 0.13);
+  --g1-note-text: #ffdcae;
+  --g1-note-bad-bg: rgba(255, 122, 107, 0.15);
+  --g1-note-bad-text: #ffc4bb;
+  /* Text fields. */
+  --g1-field-bg: #0d0a08;
   /* Room the app leaves for the phone's status and navigation bars. A host page that already pads
      the document for them sets these to 0px. Fixed overlays always use env() directly. */
   --g1-inset-top: env(safe-area-inset-top, 0px);
@@ -334,4 +341,37 @@
   background: var(--g1-accent);
   color: var(--g1-accent-ink);
   font-weight: 600;
+}
+
+/* Small helpers for text and button rows. */
+.g1-muted {
+  color: var(--g1-text-dim);
+}
+.g1-small {
+  font-size: 12.5px;
+}
+.g1-center {
+  text-align: center;
+}
+.g1-note {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--g1-note-bg);
+  color: var(--g1-note-text);
+  font-size: 13px;
+}
+.g1-note--bad {
+  background: var(--g1-note-bad-bg);
+  color: var(--g1-note-bad-text);
+}
+.g1-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+.g1-row--end {
+  justify-content: flex-end;
 }

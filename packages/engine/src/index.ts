@@ -5,5 +5,6 @@ export * from './format.js';
 export * from './i18n.js';
 export * from './loop.js';
 export * from './random.js';
+export * from './restore.js';
 export * from './save.js';
 export * from './time.js';

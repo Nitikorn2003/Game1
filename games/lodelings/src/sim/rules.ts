@@ -1,7 +1,8 @@
 import { Rng, bulkCost, hashString, isNewDay, maxAffordable } from '@game1/engine';
+import * as Shell from '@game1/shell';
 import * as C from './content.js';
 import type { AdPlacement, EggKind, Element, Entitlement, GearId, QuestMetric, RelicId, SkillId, SpeciesId } from './content.js';
-import { SETTLED_KEEP, type GameState, type OfflineReport, type Quest } from './state.js';
+import type { GameState, OfflineReport, Quest } from './state.js';
 
 /** What happened during an action, for the screen to animate. The state is already updated. */
 export type SimEvent =
@@ -767,19 +768,10 @@ export function claimAchievement(state: GameState, id: C.AchievementId): number 
 // ---------------------------------------------------------------------------------------
 // Rewarded ads
 
-function rollAdDay(state: GameState, day: string): void {
-  if (state.ads.day === day) return;
-  state.ads.day = day;
-  state.ads.total = 0;
-  state.ads.interstitials = 0;
-  for (const p of C.AD_PLACEMENTS) state.ads.counts[p] = 0;
-}
+const AD_LIMITS: Shell.RewardedLimits<AdPlacement> = { perPlacement: C.AD_DAILY_LIMITS, total: C.AD_REWARDED_DAILY_TOTAL };
 
 export function adsLeft(state: GameState, placement: AdPlacement, day: string): number {
-  const fresh = state.ads.day !== day;
-  const used = fresh ? 0 : state.ads.counts[placement];
-  const total = fresh ? 0 : state.ads.total;
-  return Math.max(0, Math.min(C.AD_DAILY_LIMITS[placement] - used, C.AD_REWARDED_DAILY_TOTAL - total));
+  return Shell.adsLeft(state.ads, placement, day, AD_LIMITS);
 }
 
 /** Whether a rewarded ad for this placement would do something right now. */
@@ -808,10 +800,7 @@ export function adOffered(state: GameState, placement: AdPlacement, c: Pick<Ctx,
  */
 export function grantAdReward(state: GameState, c: Ctx, placement: AdPlacement, slot = 0): boolean {
   if (!adOffered(state, placement, c, slot)) return false;
-  rollAdDay(state, c.day);
-  state.ads.counts[placement] += 1;
-  state.ads.total += 1;
-  state.ads.lastRewardedAt = c.now;
+  Shell.recordRewarded(state.ads, placement, c.now, c.day);
   switch (placement) {
     case 'offline_double':
       collectOffline(state, c.now, true);
@@ -832,52 +821,34 @@ export function grantAdReward(state: GameState, c: Ctx, placement: AdPlacement, 
   return true;
 }
 
-export interface InterstitialRules {
+export interface InterstitialRules extends Shell.InterstitialRules {
+  /** No ad breaks before the player has dug this deep. */
   minBestDepth: number;
-  minSessionMs: number;
-  minGapMs: number;
-  afterRewardedMs: number;
-  maxPerDay: number;
 }
 
-export const INTERSTITIAL_RULES: InterstitialRules = {
-  minBestDepth: 12,
-  minSessionMs: 5 * 60_000,
-  minGapMs: 5 * 60_000,
-  afterRewardedMs: 2 * 60_000,
-  maxPerDay: 10,
-};
+export const INTERSTITIAL_RULES: InterstitialRules = { minBestDepth: 12, ...Shell.INTERSTITIAL_DEFAULTS };
+
+/** Whether the player has dug deep enough for ad breaks at all. */
+export function adBreaksEarned(state: GameState, rules = INTERSTITIAL_RULES): boolean {
+  return state.bestDepth >= rules.minBestDepth;
+}
 
 /** Interstitials only at natural breaks, rarely, never early and never for Remove Ads owners. */
 export function interstitialAllowed(state: GameState, c: Pick<Ctx, 'now' | 'day'>, sessionStartedAt: number, rules = INTERSTITIAL_RULES): boolean {
-  if (hasEntitlement(state, 'remove_ads')) return false;
-  if (state.bestDepth < rules.minBestDepth) return false;
-  if (c.now - sessionStartedAt < rules.minSessionMs) return false;
-  if (c.now - state.ads.lastInterstitialAt < rules.minGapMs) return false;
-  if (c.now - state.ads.lastRewardedAt < rules.afterRewardedMs) return false;
-  const shownToday = state.ads.day === c.day ? state.ads.interstitials : 0;
-  return shownToday < rules.maxPerDay;
+  if (hasEntitlement(state, 'remove_ads') || !adBreaksEarned(state, rules)) return false;
+  return Shell.interstitialTimely(state.ads, c.now, c.day, sessionStartedAt, rules);
 }
 
 export function recordInterstitial(state: GameState, c: Pick<Ctx, 'now' | 'day'>): void {
-  rollAdDay(state, c.day);
-  state.ads.interstitials += 1;
-  state.ads.lastInterstitialAt = c.now;
+  Shell.recordInterstitial(state.ads, c.now, c.day);
 }
 
 // ---------------------------------------------------------------------------------------
 // Purchases. The server decides what was paid; these only apply its answers.
 
-/**
- * Applies one wallet settlement from the server: currencies moved from the server wallet into
- * this save. Each settlement id is applied at most once, so a repeated answer grants nothing.
- */
-export function applySettlement(state: GameState, id: string, amounts: Readonly<Record<string, number>>, now: number, at = now): boolean {
-  if (state.shop.settled.some((s) => s.id === id)) return false;
-  const applied: Record<string, number> = {};
+/** Adds what a purchase settled into this save: gems and eggs, taken back again after a refund. */
+export function grantPurchase(state: GameState, amounts: Readonly<Record<string, number>>, now: number): void {
   for (const [currency, amount] of Object.entries(amounts)) {
-    if (!Number.isSafeInteger(amount) || amount === 0) continue;
-    applied[currency] = amount;
     if (currency === 'gems') state.gems += amount;
     const egg = /^egg_(pebble|geode|prism)$/.exec(currency)?.[1] as EggKind | undefined;
     if (egg) {
@@ -888,28 +859,21 @@ export function applySettlement(state: GameState, id: string, amounts: Readonly<
       }
     }
   }
-  state.shop.settled = [...state.shop.settled, { id, amounts: applied, at }].sort((a, b) => a.at - b.at).slice(-SETTLED_KEEP);
   autoIncubate(state, now);
-  return true;
 }
 
-/**
- * Applies the settlements `from` received that `into` did not, so that when one save replaces
- * another (a cloud save from another phone, or a pasted one), nothing bought on either is lost.
- * Returns how many it applied.
- */
+/** Applies one wallet settlement from the server, at most once per settlement id. */
+export function applySettlement(state: GameState, id: string, amounts: Readonly<Record<string, number>>, now: number, at = now): boolean {
+  return Shell.applySettlement(state, grantPurchase, id, amounts, now, at);
+}
+
+/** Applies the settlements `from` received that `into` did not. Returns how many it applied. */
 export function mergeSettlements(into: GameState, from: GameState, now: number): number {
-  const known = new Set(into.shop.settled.map((s) => s.id));
-  // A full list has dropped its oldest entries, and `from` may still list those.
-  const oldest = into.shop.settled.length >= SETTLED_KEEP ? Math.min(...into.shop.settled.map((s) => s.at)) : Number.NEGATIVE_INFINITY;
-  let applied = 0;
-  for (const s of from.shop.settled) {
-    if (known.has(s.id) || s.at < oldest) continue;
-    if (applySettlement(into, s.id, s.amounts, now, s.at)) applied += 1;
-  }
-  return applied;
+  return Shell.mergeSettlements(into, from, grantPurchase, now);
 }
 
+/** Sets the one-time purchases the server says the player owns. */
 export function setEntitlements(state: GameState, entitlements: readonly string[]): void {
-  state.shop.entitlements = C.ENTITLEMENTS.filter((e) => entitlements.includes(e));
+  state.shop.entitlements = Shell.knownEntitlements(entitlements, C.ENTITLEMENTS);
+  state.shop.starterBought = entitlements.includes('starter_pack');
 }

@@ -2,7 +2,8 @@
 
 The Android app is the web game in `dist/` inside a [Capacitor 8](https://capacitorjs.com)
 shell. The game code is the same as in the browser; only the services differ
-(`src/native.ts` instead of `src/browser.ts`):
+(`nativeServices` from `@game1/shell/native` instead of `src/browser.ts`, chosen in
+`src/main.tsx`):
 
 | Service | Browser version | Android app |
 | --- | --- | --- |

@@ -1,4 +1,15 @@
-import type { NumberStyle, SaveFormat } from '@game1/engine';
+import { bool, dayKeyOf, int, isRecord, list, num, oneOf, recordOf, type Data, type NumberStyle, type SaveFormat } from '@game1/engine';
+import {
+  createAdLedger,
+  createSettings,
+  createShop,
+  restoreAdLedger,
+  restoreSettings,
+  restoreShop,
+  type AdLedger,
+  type ShellSettings,
+  type ShopRecord,
+} from '@game1/shell';
 import {
   ACHIEVEMENT_IDS,
   AD_PLACEMENTS,
@@ -67,15 +78,7 @@ export interface Stats {
   playSeconds: number;
 }
 
-export type LocaleSetting = 'auto' | 'en' | 'th';
-
-/** A purchase settlement this save received: what the server moved into it, and when. */
-export interface Settled {
-  id: string;
-  amounts: Record<string, number>;
-  /** When a save first received it. A save that takes it over from another keeps this time. */
-  at: number;
-}
+export { SETTLED_KEEP, type LocaleSetting } from '@game1/shell';
 
 export interface GameState {
   createdAt: number;
@@ -109,27 +112,17 @@ export interface GameState {
   daily: { claimDay: string | null; claims: number; questDay: string | null; quests: Quest[]; bonusClaimed: boolean };
   achievements: Record<AchievementId, number>;
   stats: Stats;
-  ads: { day: string | null; counts: Record<AdPlacement, number>; total: number; lastInterstitialAt: number; lastRewardedAt: number; interstitials: number };
-  /**
-   * settled: the newest settlements this save received, so a repeat grants nothing and a save
-   * that replaces this one can take over its purchases. pending: a settlement id saved before
-   * asking the server, so a crash cannot lose purchases.
-   */
-  shop: { entitlements: Entitlement[]; settled: Settled[]; pending: string | null; starterBought: boolean };
-  settings: { sound: boolean; haptics: boolean; numbers: NumberStyle; locale: LocaleSetting };
+  ads: AdLedger<AdPlacement>;
+  /** What the purchase server settled into this save, and whether the starter pack was bought. */
+  shop: ShopRecord<Entitlement> & { starterBought: boolean };
+  settings: ShellSettings & { numbers: NumberStyle };
   tutorial: string[];
   offline: OfflineReport | null;
 }
 
 export const SAVE_VERSION = 1;
-/** How many settlements a save remembers. A player making this many purchases is very rare. */
-export const SETTLED_KEEP = 200;
 /** Found eggs stop at EGG_STORAGE, but bought eggs may go past it and must never be dropped. */
 const EGG_HARD_LIMIT = 500;
-
-function record<K extends string, V>(keys: readonly K[], value: (key: K) => V): Record<K, V> {
-  return Object.fromEntries(keys.map((k) => [k, value(k)])) as Record<K, V>;
-}
 
 export function newStats(): Stats {
   return { taps: 0, blocks: 0, guardians: 0, hatches: 0, levels: 0, gear: 0, skills: 0, resurfaces: 0, oreEarned: 0, playSeconds: 0 };
@@ -151,22 +144,22 @@ export function createState(now: number, seed: number, firstHp: number): GameSta
     gems: 0,
     dust: 0,
     lifetimeDust: 0,
-    gear: record(GEAR_IDS, () => 0),
+    gear: recordOf(GEAR_IDS, () => 0),
     roster: {},
     team: [],
     eggs: [],
     incubators: [{ kind: 'starter', startedAt: now, readyAt: now + 10_000 }],
-    skills: record(SKILL_IDS, () => ({ readyAt: 0, activeUntil: 0 })),
+    skills: recordOf(SKILL_IDS, () => ({ readyAt: 0, activeUntil: 0 })),
     frenzyCarry: 0,
     blessingUntil: 0,
-    relics: record(RELIC_IDS, () => 0),
+    relics: recordOf(RELIC_IDS, () => 0),
     guardiansBeaten: [],
     daily: { claimDay: null, claims: 0, questDay: null, quests: [], bonusClaimed: false },
-    achievements: record(ACHIEVEMENT_IDS, () => 0),
+    achievements: recordOf(ACHIEVEMENT_IDS, () => 0),
     stats: newStats(),
-    ads: { day: null, counts: record(AD_PLACEMENTS, () => 0), total: 0, lastInterstitialAt: 0, lastRewardedAt: 0, interstitials: 0 },
-    shop: { entitlements: [], settled: [], pending: null, starterBought: false },
-    settings: { sound: true, haptics: true, numbers: 'short', locale: 'auto' },
+    ads: createAdLedger(AD_PLACEMENTS),
+    shop: { ...createShop<Entitlement>(), starterBought: false },
+    settings: { ...createSettings(), numbers: 'short' },
     tutorial: [],
     offline: null,
   };
@@ -174,34 +167,6 @@ export function createState(now: number, seed: number, firstHp: number): GameSta
 
 // Restoring: every field is checked and repaired, so a damaged or hand-edited save can never
 // put NaN, negative currency or unknown ids into a running game.
-
-type Data = Record<string, unknown>;
-
-const isRecord = (v: unknown): v is Data => typeof v === 'object' && v !== null && !Array.isArray(v);
-
-function num(v: unknown, fallback: number, min = 0, max = Number.MAX_VALUE): number {
-  return typeof v === 'number' && Number.isFinite(v) ? Math.min(Math.max(v, min), max) : fallback;
-}
-
-function int(v: unknown, fallback: number, min = 0, max = Number.MAX_SAFE_INTEGER): number {
-  return Math.floor(num(v, fallback, min, max));
-}
-
-function bool(v: unknown, fallback: boolean): boolean {
-  return typeof v === 'boolean' ? v : fallback;
-}
-
-function dayKey(v: unknown): string | null {
-  return typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null;
-}
-
-function oneOf<T extends string>(v: unknown, allowed: readonly T[], fallback: T): T {
-  return typeof v === 'string' && (allowed as readonly string[]).includes(v) ? (v as T) : fallback;
-}
-
-function list(v: unknown): unknown[] {
-  return Array.isArray(v) ? v : [];
-}
 
 export function restoreState(data: Data, firstHp: (depth: number) => number): GameState {
   const createdAt = num(data.createdAt, 0);
@@ -261,9 +226,9 @@ export function restoreState(data: Data, firstHp: (depth: number) => number): Ga
 
   const daily = isRecord(data.daily) ? data.daily : {};
   s.daily = {
-    claimDay: dayKey(daily.claimDay),
+    claimDay: dayKeyOf(daily.claimDay),
     claims: int(daily.claims, 0),
-    questDay: dayKey(daily.questDay),
+    questDay: dayKeyOf(daily.questDay),
     quests: list(daily.quests)
       .filter(isRecord)
       .slice(0, 5)
@@ -282,34 +247,11 @@ export function restoreState(data: Data, firstHp: (depth: number) => number): Ga
   const stats = isRecord(data.stats) ? data.stats : {};
   for (const key of Object.keys(s.stats) as (keyof Stats)[]) s.stats[key] = num(stats[key], 0);
 
-  const ads = isRecord(data.ads) ? data.ads : {};
-  const counts = isRecord(ads.counts) ? ads.counts : {};
-  s.ads = {
-    day: dayKey(ads.day),
-    counts: record(AD_PLACEMENTS, (p) => int(counts[p], 0)),
-    total: int(ads.total, 0),
-    lastInterstitialAt: num(ads.lastInterstitialAt, 0),
-    lastRewardedAt: num(ads.lastRewardedAt, 0),
-    interstitials: int(ads.interstitials, 0),
-  };
-
+  s.ads = restoreAdLedger(data.ads, AD_PLACEMENTS);
   const shop = isRecord(data.shop) ? data.shop : {};
-  s.shop = {
-    entitlements: [
-      ...new Set(list(shop.entitlements).filter((e): e is Entitlement => typeof e === 'string' && (ENTITLEMENTS as readonly string[]).includes(e))),
-    ],
-    settled: restoreSettled(list(shop.settled)),
-    pending: typeof shop.pending === 'string' && shop.pending.length <= 64 ? shop.pending : null,
-    starterBought: bool(shop.starterBought, false),
-  };
-
+  s.shop = { ...restoreShop(shop, ENTITLEMENTS), starterBought: bool(shop.starterBought, false) };
   const settings = isRecord(data.settings) ? data.settings : {};
-  s.settings = {
-    sound: bool(settings.sound, true),
-    haptics: bool(settings.haptics, true),
-    numbers: oneOf(settings.numbers, ['short', 'scientific'] as const, 'short'),
-    locale: oneOf(settings.locale, ['auto', 'en', 'th'] as const, 'auto'),
-  };
+  s.settings = { ...restoreSettings(settings), numbers: oneOf(settings.numbers, ['short', 'scientific'] as const, 'short') };
   s.tutorial = [...new Set(list(data.tutorial).filter((t): t is string => typeof t === 'string'))].slice(0, 64);
 
   const offline = isRecord(data.offline) ? data.offline : null;
@@ -321,27 +263,6 @@ export function restoreState(data: Data, firstHp: (depth: number) => number): Ga
       }
     : null;
   return s;
-}
-
-const SETTLEMENT_ID = /^[A-Za-z0-9_-]{1,64}$/;
-
-function restoreSettled(entries: unknown[]): Settled[] {
-  const seen = new Set<string>();
-  const out: Settled[] = [];
-  for (const entry of entries) {
-    // Early test saves listed only the ids.
-    const e: Data = typeof entry === 'string' ? { id: entry } : isRecord(entry) ? entry : {};
-    if (typeof e.id !== 'string' || !SETTLEMENT_ID.test(e.id) || seen.has(e.id)) continue;
-    seen.add(e.id);
-    const amounts: Record<string, number> = {};
-    if (isRecord(e.amounts)) {
-      for (const [currency, amount] of Object.entries(e.amounts)) {
-        if (currency.length <= 32 && Number.isSafeInteger(amount) && amount !== 0) amounts[currency] = amount as number;
-      }
-    }
-    out.push({ id: e.id, amounts, at: num(e.at, 0) });
-  }
-  return out.slice(-SETTLED_KEEP);
 }
 
 export function saveFormat(firstHp: (depth: number) => number): SaveFormat<GameState> {

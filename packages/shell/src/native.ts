@@ -13,12 +13,8 @@ import {
   type NativeBilling,
 } from '@game1/platform';
 import { handleBack } from '@game1/ui';
-import type { Services } from './boot.js';
-import { CATALOG } from './catalog.js';
-import type { AccountOptions } from './game.js';
-
-/** The game's id on the purchase server (its catalog and the API paths). */
-export const GAME_ID = 'lodelings';
+import type { GameIdentity, NativeConfig, Services } from './services.js';
+import type { AccountOptions } from './session.js';
 
 /** The parts of @capacitor/app used here. */
 interface AppPlugin {
@@ -32,40 +28,18 @@ export function isNativeApp(): boolean {
 }
 
 /**
- * Settings baked into the app when it is built, from VITE_* variables (see .env.example).
- * None of them is a secret: anyone who has the app can read them.
+ * The Android app: AdMob, Google Play purchases through the purchase server, Firebase sign-in.
+ * The app's Android project must include the AdMob, Firebase Authentication, App and
+ * Game1Billing plugins (a game's package.json lists them).
  */
-export interface NativeConfig {
-  /** The purchase server. Without one the app has no purchases, sign-in or cloud saves. */
-  serverUrl: string | null;
-  /** Real AdMob ad units. Without both, the app shows Google's test ads. */
-  adUnits: { rewarded: string; interstitial: string } | null;
-}
-
-type NativeEnv = Partial<Record<'VITE_IAP_SERVER_URL' | 'VITE_ADMOB_REWARDED_UNIT' | 'VITE_ADMOB_INTERSTITIAL_UNIT', string>>;
-
-const AD_UNIT = /^ca-app-pub-\d{16}\/\d{10}$/;
-
-export function nativeConfig(env: NativeEnv): NativeConfig {
-  const url = env.VITE_IAP_SERVER_URL?.trim().replace(/\/+$/, '') ?? '';
-  const rewarded = env.VITE_ADMOB_REWARDED_UNIT?.trim() ?? '';
-  const interstitial = env.VITE_ADMOB_INTERSTITIAL_UNIT?.trim() ?? '';
-  return {
-    // The Android purchase client refuses anything but https, so the game does too.
-    serverUrl: /^https:\/\/[a-z0-9.-]+(:\d+)?(\/[\w./-]*)?$/i.test(url) ? url : null,
-    adUnits: AD_UNIT.test(rewarded) && AD_UNIT.test(interstitial) ? { rewarded, interstitial } : null,
-  };
-}
-
-/** The Android app: AdMob, Google Play purchases through the purchase server, Firebase sign-in. */
-export function nativeServices(config: NativeConfig): Services {
+export function nativeServices(config: NativeConfig, game: GameIdentity): Services {
   const admob = registerPlugin<AdMobPlugin>('AdMob');
   const firebase = registerPlugin<FirebaseAuthenticationPlugin>('FirebaseAuthentication');
   const billing = registerPlugin<NativeBilling>('Game1Billing');
   const app = registerPlugin<AppPlugin>('App');
 
   // Saves stay in the WebView's localStorage, which Android keeps until the app's data is cleared.
-  const storage = webStorage('lodelings:');
+  const storage = webStorage(game.storagePrefix);
   const ads = new AdMobAds(admob, config.adUnits ? { units: config.adUnits, testing: false } : { units: ADMOB_TEST_UNITS, testing: true });
   let play: PlayStore | null = null;
   let account: AccountOptions | undefined;
@@ -74,8 +48,8 @@ export function nativeServices(config: NativeConfig): Services {
   if (config.serverUrl && Capacitor.isPluginAvailable('FirebaseAuthentication')) {
     const auth = new FirebaseAuth(firebase);
     const idToken = (forceRefresh: boolean) => auth.idToken(forceRefresh);
-    const server = new IapServerClient({ baseUrl: config.serverUrl, gameId: GAME_ID, idToken });
-    play = new PlayStore(billing, server, CATALOG, { baseUrl: config.serverUrl, gameId: GAME_ID, idToken });
+    const server = new IapServerClient({ baseUrl: config.serverUrl, gameId: game.gameId, idToken });
+    play = new PlayStore(billing, server, game.catalog, { baseUrl: config.serverUrl, gameId: game.gameId, idToken });
     account = { auth, server };
   }
   const store = play ?? noStore;
@@ -86,12 +60,12 @@ export function nativeServices(config: NativeConfig): Services {
     store,
     haptics: webHaptics,
     ...(account ? { account } : {}),
-    attach: (game) => {
+    attach: (session) => {
       void app.addListener('pause', () => {
-        void game.suspend();
+        void session.suspend();
       });
       void app.addListener('resume', () => {
-        game.resume();
+        session.resume();
         // A payment that cleared while the app was away is waiting in Google Play.
         play?.restore().catch(() => undefined);
       });

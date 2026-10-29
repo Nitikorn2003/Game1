@@ -9,6 +9,7 @@ purchases verified on a server.
 | [`packages/engine`](packages/engine) | Game-agnostic core: fixed-step loop, clocks, versioned saves with checksums, seeded random numbers, economy math, number formatting, daily resets, i18n. |
 | [`packages/platform`](packages/platform) | Device services behind small interfaces: storage, ads (test ads, AdMob with Google's consent form), purchases (test store, Google Play through the purchase server), sign-in (Firebase), cloud saves, haptics. |
 | [`packages/ui`](packages/ui) | Preact building blocks: buttons, panels, tabs, modals, toasts, the Android back button, and the store art renderer. |
+| [`packages/shell`](packages/shell) | Everything around a game's gameplay: saving, purchases settled exactly once, rewarded ads and ad break rules, sign-in, cloud saves and account deletion, the settings and privacy screens, sound, start-up, and the browser and Android services. A game extends its `Session` with its own state, rules and screens. |
 | [`packages/capacitor-billing`](packages/capacitor-billing) | The Capacitor plugin that connects a game's Android app to Google Play Billing. |
 | [`services/iap-server`](services/iap-server) | Purchase server: verifies Google Play purchases, keeps an idempotent ledger, consumes and acknowledges purchases, takes back refunds, and stores cloud saves. Node.js, TypeScript, PostgreSQL. |
 | [`clients/android`](clients/android) | The Android purchase client the billing plugin compiles in (Play Billing Library 9.1.0). Kotlin. |

@@ -40,8 +40,8 @@ the in-app products, and update the Data safety and content rating answers below
 2. **The app id** (`applicationId` in `android/release.properties`), for example
    `com.yourname.lodelings`. It can never change after the first upload.
 3. **A public contact e-mail.** Google shows it on the store page. Put it in
-   `CONTACT_EMAIL` in `src/privacy.ts` (the policy then names it), rebuild the store files,
-   and use the same address in Play Console.
+   `CONTACT_EMAIL` in `packages/shell/src/privacy.ts` (every game's policy then names it),
+   rebuild the store files, and use the same address in Play Console.
 4. **Your public details.** Play Console shows your developer name on the store page. For
    developers who sell in-app items, it can also show the address and phone number from your
    payments profile (for example in EU countries, under the Digital Services Act). Read what
@@ -67,7 +67,7 @@ example `https://<you>.github.io/privacy.html` and `https://<you>.github.io/app-
   It explains how to delete an account in the app or by e-mail, which is what Google asks for.
   Deletion requests by e-mail are handled with the server's `delete-player` command.
 
-Republish `privacy.html` whenever `src/privacy.ts` changes.
+Republish `privacy.html` whenever the policy in `packages/shell/src/privacy.ts` changes.
 
 ## 3. Build and upload
 
@@ -179,4 +179,4 @@ shared. What the game itself does:
   `targetSdkVersion` in `android/variables.gradle`, then test and release before the
   deadline.
 - Watch Android vitals (crashes, ANRs) and reviews in Play Console. If ads or purchases
-  change, review this page, the Data safety answers and `src/privacy.ts` together.
+  change, review this page, the Data safety answers and `packages/shell/src/privacy.ts` together.
