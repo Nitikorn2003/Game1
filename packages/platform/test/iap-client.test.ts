@@ -89,6 +89,19 @@ describe('the purchase server client', () => {
     await expect(unknown.deletePlayer()).rejects.toMatchObject({ code: 'unknown_game', retryable: false });
   });
 
+  it('says whether the server deleted the sign-in account too', async () => {
+    let answer: unknown = { deleted: true, signInDeleted: true };
+    const s = server(() => ({ status: 200, body: answer }));
+    const client = new IapServerClient({ baseUrl: 'https://iap.test', gameId: 'g', idToken: tokens().idToken, fetch: s.fetch });
+    expect(await client.deletePlayer()).toEqual({ signInDeleted: true });
+    answer = { deleted: true, signInDeleted: false };
+    expect(await client.deletePlayer()).toEqual({ signInDeleted: false });
+    // An older server that does not say.
+    answer = { deleted: true };
+    expect(await client.deletePlayer()).toEqual({ signInDeleted: false });
+    expect(s.sent[0]).toMatchObject({ method: 'DELETE', url: 'https://iap.test/v1/games/g/player' });
+  });
+
   it('does not call the server while signed out', async () => {
     const s = server(() => ({ status: 200, body: {} }));
     const client = new IapServerClient({ baseUrl: 'https://iap.test', gameId: 'g', idToken: () => Promise.resolve(null), fetch: s.fetch });

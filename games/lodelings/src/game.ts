@@ -1,7 +1,22 @@
 import { Emitter, FixedStepLoop, SaveSlots, exportSave, importSave, localDayKey, type Clock, type FrameScheduler, type KeyValueStore } from '@game1/engine';
-import { syncWallet, type AdOutcome, type AdsService, type Haptics, type Product, type PurchaseResult, type StoreService, type WalletHost } from '@game1/platform';
+import {
+  CloudSync,
+  syncWallet,
+  type Account,
+  type AdOutcome,
+  type AdsService,
+  type AuthService,
+  type CloudSaveApi,
+  type Haptics,
+  type LinkResult,
+  type Product,
+  type PurchaseResult,
+  type StoreService,
+  type SyncOutcome,
+  type WalletHost,
+} from '@game1/platform';
 import type { IconName } from './art/Icon.js';
-import { CATALOG } from './catalog.js';
+import { CATALOG, catalogItem } from './catalog.js';
 import type { StringKey } from './i18n/index.js';
 import * as C from './sim/content.js';
 import * as R from './sim/rules.js';
@@ -35,6 +50,13 @@ export interface GameEvents {
   toast: Toast;
 }
 
+/** Sign-in and cloud saves, which only the Android version has. */
+export interface AccountOptions {
+  auth: AuthService;
+  /** The purchase server's cloud save and player data endpoints. */
+  server: CloudSaveApi & { deletePlayer(): Promise<{ signInDeleted: boolean }> };
+}
+
 export interface GameOptions {
   clock: Clock;
   scheduler: FrameScheduler;
@@ -43,6 +65,7 @@ export interface GameOptions {
   store: StoreService;
   haptics?: Haptics;
   sound?: Sound;
+  account?: AccountOptions;
   /** The local calendar day of a time; tests pin the time zone. */
   dayKey?: (ms: number) => string;
   seed?: () => number;
@@ -58,6 +81,7 @@ const STEP_MS = 100;
 const MAX_CATCH_UP_MS = 60_000;
 const RENDER_MS = 100;
 const AUTOSAVE_MS = 15_000;
+const CLOUD_SYNC_MS = 3 * 60_000;
 const SAVE_KEY = 'save';
 
 function randomSeed(): number {
@@ -79,6 +103,10 @@ export class Game {
   saveFailed = false;
   /** Store prices by product id, once the store has answered. */
   products: ReadonlyMap<string, Product> = new Map();
+  /** The signed-in account; null while signed out, and always in the browser version. */
+  account: Account | null = null;
+  /** How the last cloud sync went, and when. */
+  cloud: { outcome: SyncOutcome; at: number } | null = null;
 
   private readonly loop: FixedStepLoop;
   private readonly haptics: Haptics;
@@ -93,9 +121,11 @@ export class Game {
   private readonly recentTaps: number[] = [];
   private toastId = 0;
   private lastBuzz = -Infinity;
-  private syncing: Promise<void> | null = null;
+  private syncing: Promise<boolean> | null = null;
   private syncRequests = 0;
   private readonly stops: (() => void)[] = [];
+  private readonly cloudSync: CloudSync | null;
+  private lastCloudSync = Infinity;
 
   private constructor(
     private readonly o: GameOptions,
@@ -107,6 +137,20 @@ export class Game {
     this.sound = o.sound ?? silentSound;
     this.dayKey = o.dayKey ?? ((ms) => localDayKey(ms));
     this.sound.setEnabled(state.settings.sound);
+    const account = o.account;
+    this.cloudSync = account
+      ? new CloudSync(
+          account.server,
+          o.storage,
+          {
+            current: () => this.exportSave(),
+            progress: (text) => this.progressOf(text),
+            adopt: (text) => this.adoptSave(text),
+            absorb: (text) => this.absorbSave(text),
+          },
+          async () => (await account.auth.account())?.playerId ?? null,
+        )
+      : null;
     this.loop = new FixedStepLoop({
       clock: o.clock,
       scheduler: o.scheduler,
@@ -126,6 +170,7 @@ export class Game {
       onFrame: (now) => {
         if (this.dirty && now - this.lastRender >= RENDER_MS) this.emitChange();
         if (now - this.lastSave >= AUTOSAVE_MS) void this.save();
+        if (now - this.lastCloudSync >= CLOUD_SYNC_MS) void this.syncCloud();
       },
     });
   }
@@ -160,6 +205,7 @@ export class Game {
     void this.syncPurchases(false);
     void this.loadProducts();
     this.loop.start();
+    void this.refreshAccount().then(() => this.syncCloud());
   }
 
   stop(): void {
@@ -167,9 +213,11 @@ export class Game {
     for (const stop of this.stops.splice(0)) stop();
   }
 
-  /** The app is going to the background: write the save now. */
+  /** The app is going to the background: write the save now, then copy it to the cloud. */
   suspend(): Promise<void> {
-    return this.save();
+    const saved = this.save();
+    void saved.then(() => this.syncCloud());
+    return saved;
   }
 
   /** The app is back in front. Offline time is paid on the next frame; a payment may have cleared. */
@@ -366,7 +414,7 @@ export class Game {
     this.emitChange();
     let result: PurchaseResult;
     try {
-      result = await this.o.store.purchase(productId);
+      result = (await this.readyToBuy(productId)) ? await this.o.store.purchase(productId) : { status: 'cancelled' };
     } catch (err) {
       result = { status: 'failed', reason: err instanceof Error ? err.message : String(err), retryable: true };
     } finally {
@@ -384,6 +432,24 @@ export class Game {
     }
     this.emitChange();
     return result;
+  }
+
+  /** True when buying this product first asks a guest to link Google. */
+  needsGoogleFor(productId: string): boolean {
+    return catalogItem(productId)?.kind === 'non_consumable' && this.account?.guest === true;
+  }
+
+  /**
+   * One-time purchases stay with the account that bought them, and a guest account is lost with
+   * the phone, so a guest links Google before buying one.
+   */
+  private async readyToBuy(productId: string): Promise<boolean> {
+    if (!this.needsGoogleFor(productId)) return true;
+    const result = await this.linkGoogle();
+    if (result === 'already_used') this.toast('shop.linkExisting');
+    else if (result === 'cancelled') this.toast('shop.linkNeeded');
+    else if (result === 'failed') this.toast('settings.account.linkFailed');
+    return result === 'linked';
   }
 
   async loadProducts(): Promise<void> {
@@ -409,17 +475,23 @@ export class Game {
     return this.o.ads.showPrivacyOptions();
   }
 
-  /** Brings the save up to date with the server wallet. Safe to call any time, any number of times. */
-  syncPurchases(quiet: boolean): Promise<void> {
+  /**
+   * Brings the save up to date with the server wallet. Safe to call any time, any number of
+   * times. Resolves to false if the server could not be reached.
+   */
+  syncPurchases(quiet: boolean): Promise<boolean> {
     this.syncRequests += 1;
     if (this.syncing) return this.syncing;
     const run = async () => {
       // Calls made while a sync runs are answered by one more round after it.
       let answered = -1;
+      let reached = false;
       while (answered !== this.syncRequests) {
         answered = this.syncRequests;
+        reached = false;
         try {
           const settlement = await syncWallet(this.o.store, this.walletHost);
+          reached = true;
           this.storeError = false;
           if (!quiet && settlement && Object.values(settlement.amounts).some((v) => v > 0)) {
             this.toast('shop.thanks', undefined, 'gem');
@@ -430,6 +502,7 @@ export class Game {
           this.storeError = true;
         }
       }
+      return reached;
     };
     const running = run().finally(() => {
       this.syncing = null;
@@ -489,6 +562,7 @@ export class Game {
     const now = this.o.clock.now();
     state.lastSeenAt = now;
     state.offline = null;
+    R.mergeSettlements(state, this.state, now);
     this.state = state;
     R.refreshQuests(state, this.today());
     R.autoIncubate(state, now);
@@ -496,6 +570,149 @@ export class Game {
     await this.save();
     await this.syncPurchases(true);
     this.emitChange();
+    return true;
+  }
+
+  /**
+   * Replaces the game with a save from another device that got further. Purchases this save
+   * received are carried over, and unlike a pasted save, offline time since that device last
+   * played is paid as usual. Throws while a purchase cannot be finished into this save yet, so
+   * the cloud sync tries again later.
+   */
+  async adoptSave(text: string): Promise<'adopted' | 'merged' | 'unreadable'> {
+    let state: GameState;
+    try {
+      state = importSave(this.format, text).state;
+    } catch {
+      return 'unreadable';
+    }
+    await this.settlePending();
+    const c = this.ctxAt(this.o.clock.now());
+    const merged = R.mergeSettlements(state, this.state, c.now);
+    this.state = state;
+    R.refreshQuests(state, c.day);
+    R.autoIncubate(state, c.now);
+    R.returnFromOffline(state, c);
+    this.sound.setEnabled(state.settings.sound);
+    this.dispatch(c, true);
+    await this.save();
+    await this.syncPurchases(true);
+    return merged > 0 ? 'merged' : 'adopted';
+  }
+
+  /** This save won over another device's: take over the purchases that one received. */
+  async absorbSave(text: string): Promise<void> {
+    let other: GameState;
+    try {
+      other = importSave(this.format, text).state;
+    } catch {
+      return;
+    }
+    const merged = R.mergeSettlements(this.state, other, this.o.clock.now());
+    // A purchase the other device had not finished yet is finished here, in case that device
+    // never comes back. Settlements are idempotent, so both finishing it grants it once per save.
+    const theirs = other.shop.pending;
+    const takeOver = theirs !== null && this.state.shop.pending === null && !this.state.shop.settled.some((s) => s.id === theirs);
+    if (takeOver) this.state.shop.pending = theirs;
+    if (merged === 0 && !takeOver) return;
+    this.dirty = true;
+    await this.save();
+    if (takeOver) void this.syncPurchases(true);
+  }
+
+  /**
+   * How far a save got, to choose between two that both changed: its time played, which offline
+   * earnings do not add to, so an idle phone never beats one that was played in the meantime.
+   */
+  progressOf(text: string): number {
+    try {
+      return importSave(this.format, text).state.stats.playSeconds;
+    } catch {
+      return -1;
+    }
+  }
+
+  /** Finishes a purchase being settled into this save, so it is in `shop.settled`. Throws if it cannot yet. */
+  private async settlePending(): Promise<void> {
+    if (this.state.shop.pending === null) return;
+    const reached = await this.syncPurchases(true);
+    // The sync clears the pending id once the server has answered for it.
+    if (!reached || this.walletHost.pendingSettlement() !== null) throw new Error('A purchase is still being settled into this save.');
+  }
+
+  // -------------------------------------------------------------------------------------
+  // Account and cloud save
+
+  get accountsEnabled(): boolean {
+    return this.o.account !== undefined;
+  }
+
+  async refreshAccount(): Promise<void> {
+    if (!this.o.account) return;
+    this.account = await this.o.account.auth.account();
+    this.emitChange();
+  }
+
+  /** Syncs the cloud save now. The game also does it every few minutes and when it goes to the background. */
+  async syncCloud(): Promise<SyncOutcome | null> {
+    if (!this.cloudSync) return null;
+    this.lastCloudSync = this.o.clock.now();
+    const outcome = await this.cloudSync.sync();
+    this.cloud = { outcome, at: this.o.clock.now() };
+    if (outcome === 'downloaded') this.toast('toast.cloudLoaded', undefined, 'cloud');
+    this.emitChange();
+    return outcome;
+  }
+
+  /** Adds Google sign-in to this account, so progress and purchases survive a new phone. */
+  async linkGoogle(): Promise<LinkResult> {
+    if (!this.o.account) return 'failed';
+    const result = await this.o.account.auth.linkGoogle();
+    await this.refreshAccount();
+    if (result === 'linked') this.toast('toast.googleLinked', undefined, 'cloud');
+    return result;
+  }
+
+  /** Signs in with a Google account that already has a save; the save that got further is kept. */
+  async switchToGoogle(): Promise<LinkResult> {
+    if (!this.o.account) return 'failed';
+    // Purchases on their way to the guest account must reach this save before the account changes.
+    if (!(await this.syncPurchases(true)) || this.state.shop.pending !== null) return 'failed';
+    const result = await this.o.account.auth.switchToGoogle();
+    await this.refreshAccount();
+    if (result === 'linked') {
+      await this.syncCloud();
+      await this.syncPurchases(true);
+    }
+    return result;
+  }
+
+  /**
+   * Deletes the player's data on the server, their sign-in account and the save on this device,
+   * then starts a new game. Purchase records stay on the server for refunds and accounting.
+   */
+  async deleteAccount(): Promise<boolean> {
+    const account = this.o.account;
+    if (!account || !this.cloudSync) return false;
+    try {
+      const { signInDeleted } = await account.server.deletePlayer();
+      await this.cloudSync.forget();
+      if (signInDeleted) await account.auth.signOut();
+      else await account.auth.deleteAccount();
+    } catch {
+      this.toast('toast.deleteFailed');
+      this.emitChange();
+      return false;
+    }
+    const now = this.o.clock.now();
+    this.state = createState(now, (this.o.seed ?? randomSeed)(), R.blockHp(1));
+    this.account = null;
+    this.cloud = null;
+    // Both save slots, so no copy of the old game is left on the device.
+    await this.save();
+    await this.save();
+    this.toast('toast.accountDeleted');
+    await this.refreshAccount();
     return true;
   }
 

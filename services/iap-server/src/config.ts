@@ -22,6 +22,11 @@ const envSchema = z.object({
   AUTH_ISSUER: z.string().min(1),
   /** Comma separated list of accepted audiences. */
   AUTH_AUDIENCE: z.string().min(1),
+  /**
+   * Set when players sign in with Firebase Authentication: deleting a player then deletes their
+   * Firebase account too. The service account needs the Firebase Authentication Admin role.
+   */
+  FIREBASE_PROJECT_ID: z.string().regex(/^[a-z][a-z0-9-]{4,28}[a-z0-9]$/).optional(),
 
   // Google Play Developer API. Credentials come from Application Default Credentials
   // (GOOGLE_APPLICATION_CREDENTIALS or the platform's workload identity), never from this file.
@@ -53,6 +58,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env) {
     ...parsed,
     AUTH_AUDIENCE: parsed.AUTH_AUDIENCE.split(',').map((a) => a.trim()).filter(Boolean),
   };
+  // The ids in the tokens are only meaningful in the project that issued them.
+  if (config.FIREBASE_PROJECT_ID && config.AUTH_ISSUER !== `https://securetoken.google.com/${config.FIREBASE_PROJECT_ID}`) {
+    throw new Error('AUTH_ISSUER must be https://securetoken.google.com/<FIREBASE_PROJECT_ID> when FIREBASE_PROJECT_ID is set');
+  }
   if (config.NODE_ENV === 'production') {
     if (!config.AUTH_JWKS_URL.startsWith('https://')) {
       throw new Error('AUTH_JWKS_URL must use https in production');

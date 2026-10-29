@@ -64,6 +64,7 @@ function OfferCard(props: { id: Offer; owned: boolean }): JSX.Element {
             <Icon name="gem" size={14} /> {item.grants.gems}
           </div>
         )}
+        {!props.owned && game.needsGoogleFor(props.id) && <div class="small muted">{t('shop.needsGoogle')}</div>}
       </div>
       {props.owned ? (
         <span class="owned">{t('shop.owned')}</span>

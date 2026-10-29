@@ -7,6 +7,7 @@ import { type AppConfig, parseTrustProxy } from './config.js';
 import { createPool } from './db/pool.js';
 import type { Logger } from './logging.js';
 import { createGooglePlayDeveloperApi } from './play/play-api.js';
+import { firebaseSignInAccounts } from './players/sign-in-accounts.js';
 import { PurchaseService } from './purchases/service.js';
 
 export function createLogger(config: Pick<AppConfig, 'LOG_LEVEL'>, destination?: DestinationStream) {
@@ -38,7 +39,10 @@ export function createServices(config: AppConfig, logger: Logger) {
       rejectedPurchasePolicy: config.REJECTED_PURCHASE_POLICY,
     },
   });
-  return { catalog, pool, play, purchases };
+  const signInAccounts = config.FIREBASE_PROJECT_ID
+    ? firebaseSignInAccounts({ projectId: config.FIREBASE_PROJECT_ID, timeoutMs: config.PLAY_API_TIMEOUT_MS })
+    : undefined;
+  return { catalog, pool, play, purchases, signInAccounts };
 }
 
 export async function createHttpApp(
@@ -63,6 +67,7 @@ export async function createHttpApp(
     ...(config.RTDN_EXPECTED_SUBSCRIPTION ? { rtdnExpectedSubscription: config.RTDN_EXPECTED_SUBSCRIPTION } : {}),
     verifyRateLimitPerMinute: config.VERIFY_RATE_LIMIT_PER_MINUTE,
     playerWriteRateLimitPerMinute: config.PLAYER_WRITE_RATE_LIMIT_PER_MINUTE,
+    ...(services.signInAccounts ? { signInAccounts: services.signInAccounts } : {}),
     logger,
     trustProxy: parseTrustProxy(config.TRUST_PROXY) ?? false,
   });

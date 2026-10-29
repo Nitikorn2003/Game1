@@ -69,6 +69,14 @@ export interface Stats {
 
 export type LocaleSetting = 'auto' | 'en' | 'th';
 
+/** A purchase settlement this save received: what the server moved into it, and when. */
+export interface Settled {
+  id: string;
+  amounts: Record<string, number>;
+  /** When a save first received it. A save that takes it over from another keeps this time. */
+  at: number;
+}
+
 export interface GameState {
   createdAt: number;
   /** Last time the simulation ran. The gap to the next start is offline time. */
@@ -102,14 +110,20 @@ export interface GameState {
   achievements: Record<AchievementId, number>;
   stats: Stats;
   ads: { day: string | null; counts: Record<AdPlacement, number>; total: number; lastInterstitialAt: number; lastRewardedAt: number; interstitials: number };
-  /** pending: a settlement id saved before asking the server, so a crash cannot lose purchases. */
-  shop: { entitlements: Entitlement[]; settled: string[]; pending: string | null; starterBought: boolean };
+  /**
+   * settled: the newest settlements this save received, so a repeat grants nothing and a save
+   * that replaces this one can take over its purchases. pending: a settlement id saved before
+   * asking the server, so a crash cannot lose purchases.
+   */
+  shop: { entitlements: Entitlement[]; settled: Settled[]; pending: string | null; starterBought: boolean };
   settings: { sound: boolean; haptics: boolean; numbers: NumberStyle; locale: LocaleSetting };
   tutorial: string[];
   offline: OfflineReport | null;
 }
 
 export const SAVE_VERSION = 1;
+/** How many settlements a save remembers. A player making this many purchases is very rare. */
+export const SETTLED_KEEP = 200;
 /** Found eggs stop at EGG_STORAGE, but bought eggs may go past it and must never be dropped. */
 const EGG_HARD_LIMIT = 500;
 
@@ -284,9 +298,7 @@ export function restoreState(data: Data, firstHp: (depth: number) => number): Ga
     entitlements: [
       ...new Set(list(shop.entitlements).filter((e): e is Entitlement => typeof e === 'string' && (ENTITLEMENTS as readonly string[]).includes(e))),
     ],
-    settled: list(shop.settled)
-      .filter((id): id is string => typeof id === 'string' && id.length <= 64)
-      .slice(-50),
+    settled: restoreSettled(list(shop.settled)),
     pending: typeof shop.pending === 'string' && shop.pending.length <= 64 ? shop.pending : null,
     starterBought: bool(shop.starterBought, false),
   };
@@ -309,6 +321,27 @@ export function restoreState(data: Data, firstHp: (depth: number) => number): Ga
       }
     : null;
   return s;
+}
+
+const SETTLEMENT_ID = /^[A-Za-z0-9_-]{1,64}$/;
+
+function restoreSettled(entries: unknown[]): Settled[] {
+  const seen = new Set<string>();
+  const out: Settled[] = [];
+  for (const entry of entries) {
+    // Early test saves listed only the ids.
+    const e: Data = typeof entry === 'string' ? { id: entry } : isRecord(entry) ? entry : {};
+    if (typeof e.id !== 'string' || !SETTLEMENT_ID.test(e.id) || seen.has(e.id)) continue;
+    seen.add(e.id);
+    const amounts: Record<string, number> = {};
+    if (isRecord(e.amounts)) {
+      for (const [currency, amount] of Object.entries(e.amounts)) {
+        if (currency.length <= 32 && Number.isSafeInteger(amount) && amount !== 0) amounts[currency] = amount as number;
+      }
+    }
+    out.push({ id: e.id, amounts, at: num(e.at, 0) });
+  }
+  return out.slice(-SETTLED_KEEP);
 }
 
 export function saveFormat(firstHp: (depth: number) => number): SaveFormat<GameState> {

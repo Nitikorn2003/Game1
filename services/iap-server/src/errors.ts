@@ -37,6 +37,14 @@ export const invalidPurchaseToken = () =>
 export const purchaseRejected = (reason: string) =>
   new AppError(422, 'purchase_rejected', `The purchase cannot be fulfilled (${reason}).`);
 
+export const signInDeletionFailed = (retryable: boolean) =>
+  new AppError(
+    retryable ? 503 : 502,
+    'sign_in_deletion_failed',
+    'The player data was deleted, but the sign-in account could not be. Try again.',
+    retryable,
+  );
+
 export const upstreamUnavailable = () =>
   new AppError(
     503,

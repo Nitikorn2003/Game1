@@ -13,8 +13,14 @@ export interface CloudSyncHost {
   current(): string;
   /** How far a save got. When both copies changed, the one further along wins. */
   progress(save: string): number;
-  /** Replaces the game with this save from another device. False if the text could not be loaded. */
-  adopt(save: string): Promise<boolean>;
+  /**
+   * Replaces the game with this save from another device, taking over anything from the
+   * replaced save that must not be lost, such as purchases: then it answers merged, and the
+   * result goes back to the cloud. A throw means not now, and the sync tries again later.
+   */
+  adopt(save: string): Promise<'adopted' | 'merged' | 'unreadable'>;
+  /** This device's save won over this one from another device: take over what must not be lost. */
+  absorb?(save: string): Promise<void>;
 }
 
 /**
@@ -64,6 +70,14 @@ export class CloudSync {
     return this.running;
   }
 
+  /** Forgets what this device knows about the signed-in player's cloud save, for account deletion. */
+  async forget(): Promise<void> {
+    const player = await this.playerId();
+    if (!player) return;
+    await this.storage.remove(`cloud.${player}`);
+    await this.storage.remove(`cloud.${player}.backup`);
+  }
+
   /** The save this device replaced with a cloud save, if any, so it can still be recovered. */
   async backup(): Promise<string | null> {
     const player = await this.playerId();
@@ -83,7 +97,7 @@ export class CloudSync {
       }
       // Another device wrote, or the cloud copy was deleted.
       if (!remote) return await this.upload(player, null, local);
-      if (!localChanged) return (await this.download(player, remote)) ? 'downloaded' : await this.overwrite(player, remote, local);
+      if (!localChanged) return (await this.download(player, remote)) ? 'downloaded' : await this.overwrite(player, remote);
       return await this.resolve(player, local, remote);
     } catch {
       return 'offline';
@@ -108,11 +122,13 @@ export class CloudSync {
 
   private async resolve(player: string, local: string, remote: CloudSave): Promise<SyncOutcome> {
     if (this.host.progress(remote.data) > this.host.progress(local) && (await this.download(player, remote))) return 'downloaded';
-    return this.overwrite(player, remote, local);
+    return this.overwrite(player, remote);
   }
 
   /** This device's save wins over the cloud copy at `remote.revision`. */
-  private async overwrite(player: string, remote: CloudSave, local: string): Promise<SyncOutcome> {
+  private async overwrite(player: string, remote: CloudSave): Promise<SyncOutcome> {
+    await this.host.absorb?.(remote.data);
+    const local = this.host.current();
     const result = await this.api.writeSave(remote.revision, local);
     // Yet another write got in between: leave it for the next sync.
     if (result.status !== 'saved') return 'offline';
@@ -122,8 +138,16 @@ export class CloudSync {
 
   private async download(player: string, remote: CloudSave): Promise<boolean> {
     await this.storage.set(`cloud.${player}.backup`, this.host.current());
-    if (!(await this.host.adopt(remote.data))) return false;
-    await this.remember(player, remote.revision, this.host.current());
+    const adopted = await this.host.adopt(remote.data);
+    if (adopted === 'unreadable') return false;
+    const local = this.host.current();
+    await this.remember(player, remote.revision, local);
+    if (adopted === 'merged') {
+      // The cloud copy lacks what this device took over. If another write got in first, the
+      // next sync downloads that one and takes it over again.
+      const result = await this.api.writeSave(remote.revision, local);
+      if (result.status === 'saved') await this.remember(player, result.save.revision, local);
+    }
     return true;
   }
 

@@ -27,7 +27,8 @@ export type IconName =
   | 'up'
   | 'sword'
   | 'gift'
-  | 'trophy';
+  | 'trophy'
+  | 'cloud';
 
 const PATHS: Record<IconName, JSX.Element> = {
   ore: (
@@ -184,6 +185,12 @@ const PATHS: Record<IconName, JSX.Element> = {
     <g stroke-linecap="round" stroke-linejoin="round">
       <path d="M14 3H21V10L10 21L3 14Z" fill="#cfd8e3" stroke="#3b4652" stroke-width="1.5" />
       <path d="M6 16L8 18" stroke="#3b4652" stroke-width="2" />
+    </g>
+  ),
+  cloud: (
+    <g stroke="#2d4a63" stroke-width="1.4" stroke-linejoin="round">
+      <path d="M7 19H17.5A4.5 4.5 0 0 0 18 10A6 6 0 0 0 6.6 9.2A5 5 0 0 0 7 19Z" fill="#cfe6f7" />
+      <path d="M9 12.5A3 3 0 0 1 12 10.5" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" />
     </g>
   ),
   gift: (

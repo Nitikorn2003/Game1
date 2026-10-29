@@ -48,7 +48,7 @@ verified token.
 | `POST /v1/games/{gameId}/wallet/settlements` | Body `{"settlementId"}` (8 to 64 of `A-Z a-z 0-9 - _`). Moves every non-zero balance into the game's save and answers `{"id", "amounts"}`. Amounts are negative when a refund took back currency that was already settled. The same id always gets the same answer and never moves currency twice, so a client keeps the id until its save holds the result. Entitlements are not moved. |
 | `GET /v1/games/{gameId}/save` | `{"save": {"revision", "data", "updatedAt"}}`, or `{"save": null}`. |
 | `PUT /v1/games/{gameId}/save` | Body `{"baseRevision", "data"}`: the revision the device started from (`null` if it saw no cloud save) and the save text (at most 48 KiB). Answers `{"save"}` with the next revision, or 409 `save_conflict` with the newer `save` when another device wrote first. |
-| `DELETE /v1/games/{gameId}/player` | Deletes the player's cloud save, settlements and billing account id for this game. Purchase records, the ledger and entitlements stay, because refunds and chargebacks can still arrive and payment records must be kept. |
+| `DELETE /v1/games/{gameId}/player` | Deletes the player's cloud saves, settlements and billing account ids in every game on this server, because they all share one sign-in account. With `FIREBASE_PROJECT_ID` set it then deletes the Firebase account too and answers `{"deleted": true, "signInDeleted": true}`; otherwise `signInDeleted` is false and the app deletes the account itself. Purchase records, the ledger and entitlements stay, because refunds and chargebacks can still arrive and payment records must be kept. Safe to repeat. |
 | `POST /v1/rtdn/google-play` | Pub/Sub push endpoint. Needs Google's OIDC token for `RTDN_PUSH_SERVICE_ACCOUNT` and `RTDN_PUSH_AUDIENCE`. |
 | `GET /healthz`, `GET /readyz` | Liveness, and readiness including the database. |
 
@@ -56,7 +56,9 @@ Errors are `{"error": {"code", "message", "retryable"}}`. When `retryable` is tr
 500, 503) the client must keep the purchase and try again later. Other codes are final:
 `invalid_request` (400), `unauthorized` (401), `purchase_not_owned` (403), `unknown_game`
 (404), `save_conflict` (409), `unknown_product`, `product_mismatch`, `invalid_purchase_token`
-and `purchase_rejected` (422). Settlements, save writes and deletion are limited per player
+and `purchase_rejected` (422). `sign_in_deletion_failed` means the player's data is already
+deleted but the Firebase account is not: 503 when trying again can help, 502 when the service
+account lacks the permission. Settlements, save writes and deletion are limited per player
 (`PLAYER_WRITE_RATE_LIMIT_PER_MINUTE`, default 120).
 
 Spending currency is game logic and has no HTTP endpoint here. Call `spendCurrency()` from
@@ -83,6 +85,13 @@ Settings that change what gets granted:
 | `ALLOW_TEST_PURCHASES` | `false` | Grant purchases made by license testers. They cost nothing, so turn this on only while testing. |
 | `REQUIRE_OBFUSCATED_ACCOUNT_ID` | `false` | Refuse purchases without an account id (for example promo codes redeemed in the Play Store). When false, the first signed-in player who claims such a purchase gets it. |
 | `REJECTED_PURCHASE_POLICY` | `hold` | `hold` leaves an invalid paid purchase unacknowledged (Google refunds it after three days). `refund` refunds and revokes it at once through `orders.refund`, which is what Google recommends but moves money. |
+
+Set `FIREBASE_PROJECT_ID` when players sign in with Firebase Authentication. Deleting a
+player then deletes their Firebase account from the server, so the app never has to ask the
+player to sign in again first (Firebase requires a recent sign-in before an app deletes its own
+account, and a guest cannot sign in again). The service account needs the **Firebase
+Authentication Admin** role in that project, and `AUTH_ISSUER` must be
+`https://securetoken.google.com/<FIREBASE_PROJECT_ID>`.
 
 External setup (Play Console, service account, Pub/Sub, identity provider) is described in
 [docs/iap/PLAY_CONSOLE_SETUP.md](../../docs/iap/PLAY_CONSOLE_SETUP.md).

@@ -8,11 +8,13 @@ import { Catalog } from '../../src/catalog.js';
 import type { Pool } from '../../src/db/pool.js';
 import type { Logger } from '../../src/logging.js';
 import { createGooglePlayDeveloperApi, type PlayDeveloperApi } from '../../src/play/play-api.js';
+import { firebaseSignInAccounts } from '../../src/players/sign-in-accounts.js';
 import type { PurchasePolicy } from '../../src/purchases/evaluate.js';
 import type { PurchaseRow } from '../../src/purchases/repository.js';
 import { PurchaseService } from '../../src/purchases/service.js';
 import { createLogger } from '../../src/server.js';
 import { createTestDatabase, truncateAll } from './db.js';
+import { FakeIdentityToolkit } from './fake-identity-toolkit.js';
 import { FAKE_ACCESS_TOKEN, FakePlayApi, type FakePurchase } from './fake-play-api.js';
 import { createTestIssuer, type TestIssuer } from './keys.js';
 
@@ -99,7 +101,11 @@ export interface HarnessOptions {
   playerWriteRateLimitPerMinute?: number;
   playTimeoutMs?: number;
   rtdnExpectedSubscription?: string;
+  /** Delete sign-in accounts with player data, through the fake Identity Toolkit. */
+  deleteSignInAccounts?: boolean;
 }
+
+export const FIREBASE_PROJECT = 'game1-test';
 
 export interface ApiResponse {
   status: number;
@@ -157,6 +163,7 @@ export function voidedNotification(
  */
 export class Harness {
   readonly fake = new FakePlayApi();
+  readonly identity = new FakeIdentityToolkit();
   readonly clock = new TestClock();
   readonly logs = new LogCapture();
   readonly catalog = Catalog.parse(TEST_CATALOG);
@@ -174,6 +181,7 @@ export class Harness {
     const h = new Harness();
     h.pool = await createTestDatabase();
     await h.fake.start();
+    await h.identity.start();
     h.playerIssuer = await createTestIssuer('player-key-1');
     h.googleIssuer = await createTestIssuer('google-key-1');
     await h.configure(options);
@@ -205,6 +213,7 @@ export class Harness {
       ...(options.rtdnExpectedSubscription ? { rtdnExpectedSubscription: options.rtdnExpectedSubscription } : {}),
       verifyRateLimitPerMinute: options.verifyRateLimitPerMinute ?? 10_000,
       playerWriteRateLimitPerMinute: options.playerWriteRateLimitPerMinute ?? 10_000,
+      ...(options.deleteSignInAccounts ? { signInAccounts: this.createSignInAccounts() } : {}),
       logger,
     });
     await this.app.ready();
@@ -215,6 +224,13 @@ export class Harness {
     const client = new auth.OAuth2();
     client.setCredentials({ access_token: FAKE_ACCESS_TOKEN, expiry_date: Date.now() + 24 * 3600_000 });
     return createGooglePlayDeveloperApi({ auth: client, rootUrl: this.fake.url, timeoutMs });
+  }
+
+  /** Firebase user deletion as in production, pointed at the fake Identity Toolkit. */
+  createSignInAccounts() {
+    const client = new auth.OAuth2();
+    client.setCredentials({ access_token: FAKE_ACCESS_TOKEN, expiry_date: Date.now() + 24 * 3600_000 });
+    return firebaseSignInAccounts({ projectId: FIREBASE_PROJECT, timeoutMs: 2000, auth: client, rootUrl: this.identity.url });
   }
 
   createService(overrides: { policy?: Partial<PurchasePolicy>; play?: PlayDeveloperApi; pool?: Pool } = {}): PurchaseService {
@@ -231,6 +247,7 @@ export class Harness {
   async reset(options: HarnessOptions = {}): Promise<void> {
     await truncateAll(this.pool);
     this.fake.reset();
+    this.identity.reset();
     this.clock.reset();
     this.logs.clear();
     await this.configure(options);
@@ -240,6 +257,7 @@ export class Harness {
     await this.app?.close();
     await this.pool?.end();
     await this.fake.stop();
+    await this.identity.stop();
   }
 
   // -------------------------------------------------------------------------

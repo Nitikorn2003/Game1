@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import * as C from '../src/sim/content.js';
 import * as R from '../src/sim/rules.js';
+import { SETTLED_KEEP } from '../src/sim/state.js';
 import { T0, at, newGame, withLodeling } from './helpers.js';
 
 const HOUR = 3_600_000;
@@ -345,13 +346,43 @@ describe('purchases', () => {
     expect(R.resetSkills(s, T0)).toBe(false);
   });
 
-  it('keep only known entitlements and remember at most 50 settlements', () => {
+  it('keep only known entitlements and remember the newest settlements', () => {
     const s = newGame();
     R.setEntitlements(s, ['ore_doubler', 'free_money']);
     expect(s.shop.entitlements).toEqual(['ore_doubler']);
     expect(R.lastingOreMultiplier(s)).toBe(2);
-    for (let i = 0; i < 60; i++) R.applySettlement(s, `id-${i}`, { gems: 1 }, T0);
-    expect(s.shop.settled).toHaveLength(50);
-    expect(s.gems).toBe(60);
+    for (let i = 0; i < SETTLED_KEEP + 10; i++) R.applySettlement(s, `id-${i}`, { gems: 1 }, T0 + i);
+    expect(s.shop.settled).toHaveLength(SETTLED_KEEP);
+    expect(s.shop.settled[0]).toEqual({ id: 'id-10', amounts: { gems: 1 }, at: T0 + 10 });
+    expect(s.gems).toBe(SETTLED_KEEP + 10);
+  });
+
+  it('carry purchases from a replaced save into the one that replaces it, once', () => {
+    const shared = newGame();
+    R.applySettlement(shared, 'before-split', { gems: 100 }, T0);
+    const phone = structuredClone(shared);
+    const tablet = structuredClone(shared);
+    R.applySettlement(phone, 'phone-buy', { gems: 550, egg_prism: 1 }, T0 + 1000);
+    R.applySettlement(tablet, 'tablet-buy', { gems: 1200 }, T0 + 2000);
+    R.applySettlement(tablet, 'tablet-refund', { gems: -100 }, T0 + 3000);
+
+    expect(R.mergeSettlements(tablet, phone, T0 + 4000)).toBe(1);
+    expect(tablet.gems).toBe(100 + 1200 - 100 + 550);
+    expect(tablet.eggs.length + tablet.incubators.filter(Boolean).length).toBe(phone.eggs.length + phone.incubators.filter(Boolean).length);
+    expect(tablet.shop.settled.find((x) => x.id === 'phone-buy')?.at).toBe(T0 + 1000);
+    // Merging again, or merging back the other way, never grants twice.
+    expect(R.mergeSettlements(tablet, phone, T0 + 5000)).toBe(0);
+    expect(R.mergeSettlements(phone, tablet, T0 + 5000)).toBe(2);
+    expect(phone.gems).toBe(tablet.gems);
+  });
+
+  it('not carry settlements a full list may have dropped already', () => {
+    const full = newGame();
+    for (let i = 0; i < SETTLED_KEEP; i++) R.applySettlement(full, `new-${i}`, { gems: 1 }, T0 + 10_000 + i);
+    const old = newGame();
+    R.applySettlement(old, 'old-buy', { gems: 500 }, T0);
+    R.applySettlement(old, 'later-buy', { gems: 7 }, T0 + 20_000);
+    expect(R.mergeSettlements(full, old, T0 + 30_000)).toBe(1);
+    expect(full.gems).toBe(SETTLED_KEEP + 7);
   });
 });

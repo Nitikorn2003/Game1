@@ -66,8 +66,13 @@ export class IapServerClient {
     }
   }
 
-  async deletePlayer(): Promise<void> {
-    await this.request('DELETE', '/player');
+  /**
+   * Deletes the player's data on the server, and their sign-in account when the server is set up
+   * to. signInDeleted false means the app must delete the sign-in account itself.
+   */
+  async deletePlayer(): Promise<{ signInDeleted: boolean }> {
+    const body = await this.request<{ signInDeleted?: unknown }>('DELETE', '/player');
+    return { signInDeleted: body.signInDeleted === true };
   }
 
   private async request<T>(method: string, path: string, body?: unknown, retried = false): Promise<T> {

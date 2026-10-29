@@ -145,6 +145,12 @@ describe('configuration', () => {
     expect(() => loadConfig({ ...base, NODE_ENV: 'development', AUTH_JWKS_URL: 'http://localhost/jwks' })).not.toThrow();
   });
 
+  it('only deletes Firebase accounts in the project that issues the player tokens', () => {
+    expect(loadConfig({ ...base, FIREBASE_PROJECT_ID: 'game1-prod' }).FIREBASE_PROJECT_ID).toBe('game1-prod');
+    expect(() => loadConfig({ ...base, FIREBASE_PROJECT_ID: 'other-project' })).toThrow('AUTH_ISSUER');
+    expect(() => loadConfig({ ...base, FIREBASE_PROJECT_ID: 'Bad_Id' })).toThrow();
+  });
+
   it('rejects missing and invalid settings', () => {
     expect(() => loadConfig({ ...base, DATABASE_URL: undefined })).toThrow();
     expect(() => loadConfig({ ...base, RTDN_PUSH_SERVICE_ACCOUNT: 'not-an-email' })).toThrow();

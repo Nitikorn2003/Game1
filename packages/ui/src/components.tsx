@@ -2,7 +2,7 @@ import type { CSSProperties, ComponentChildren, JSX } from 'preact';
 import { useEffect, useRef } from 'preact/hooks';
 import { useHoldRepeat } from './hooks.js';
 
-export type ButtonVariant = 'primary' | 'ghost' | 'gem' | 'ad' | 'good';
+export type ButtonVariant = 'primary' | 'ghost' | 'gem' | 'ad' | 'good' | 'danger';
 
 export interface ButtonProps {
   children: ComponentChildren;

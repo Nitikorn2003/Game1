@@ -63,7 +63,17 @@ The server accepts any OpenID Connect or JWT issuer. For Firebase Authentication
 AUTH_JWKS_URL=https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com
 AUTH_ISSUER=https://securetoken.google.com/<firebase project id>
 AUTH_AUDIENCE=<firebase project id>
+FIREBASE_PROJECT_ID=<firebase project id>
 ```
+
+With `FIREBASE_PROJECT_ID` set, deleting a player in the game also deletes their Firebase
+account from the server. Give the server's service account the **Firebase Authentication
+Admin** role (`roles/firebaseauth.admin`) in the Firebase project's IAM page in the Google
+Cloud console, and make sure the Identity Toolkit API is enabled there (Firebase enables it
+when Authentication is turned on).
+
+In Firebase Authentication, turn on the **Anonymous** and **Google** sign-in providers: every
+player starts as a guest and can link Google later.
 
 The Android client passes the current ID token through `HttpPurchaseBackend(sessionToken = ...)`.
 

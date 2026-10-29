@@ -423,6 +423,7 @@ export function SettingsModal(): JSX.Element {
           ]}
         />
       </div>
+      {game.accountsEnabled && <AccountSection />}
       <div class="row">
         <Button
           small
@@ -512,6 +513,127 @@ export function SettingsModal(): JSX.Element {
       </div>
       <p class="small muted center">{t('settings.version', { version: ui.version })}</p>
     </Modal>
+  );
+}
+
+/** Sign-in, cloud save and account deletion; only in the Android version. */
+function AccountSection(): JSX.Element {
+  const { game, t, time, now } = useView();
+  const [step, setStep] = useState<'none' | 'already_used' | 'link_failed' | 'confirm_delete'>('none');
+  const [working, setWorking] = useState(false);
+  const account = game.account;
+  const run = (task: () => Promise<unknown>) => {
+    setWorking(true);
+    void task().finally(() => {
+      setWorking(false);
+    });
+  };
+  const cloud = game.cloud;
+  return (
+    <section class="account" data-testid="account">
+      <h3>{t('settings.account')}</h3>
+      <p class="small">
+        {!account ? t('settings.account.offline') : account.guest ? t('settings.account.guest') : t('settings.account.google', { email: account.email ?? '' })}
+      </p>
+      {account && (
+        <p class="small muted">
+          {cloud && cloud.outcome !== 'offline' ? t('settings.cloud.synced', { time: time(Math.max(1, (now - cloud.at) / 1000)) }) : t('settings.cloud.offline')}
+        </p>
+      )}
+      {account?.guest && <p class="small muted">{t('settings.account.linkHint')}</p>}
+      {step === 'already_used' && <p class="note">{t('settings.account.alreadyUsed')}</p>}
+      {step === 'link_failed' && <p class="note note--bad">{t('settings.account.linkFailed')}</p>}
+      {step === 'confirm_delete' && <p class="note note--bad">{t('settings.deleteConfirm')}</p>}
+      <div class="row">
+        {account?.guest && step !== 'already_used' && step !== 'confirm_delete' && (
+          <Button
+            small
+            disabled={working}
+            testId="link-google"
+            onPress={() => {
+              run(async () => {
+                const result = await game.linkGoogle();
+                setStep(result === 'already_used' ? 'already_used' : result === 'failed' ? 'link_failed' : 'none');
+              });
+            }}
+          >
+            {t('settings.account.link')}
+          </Button>
+        )}
+        {step === 'already_used' && (
+          <Button
+            small
+            disabled={working}
+            testId="switch-google"
+            onPress={() => {
+              run(async () => {
+                const result = await game.switchToGoogle();
+                setStep(result === 'failed' ? 'link_failed' : 'none');
+              });
+            }}
+          >
+            {t('settings.account.switch')}
+          </Button>
+        )}
+        {account && step !== 'confirm_delete' && (
+          <Button
+            small
+            variant="ghost"
+            disabled={working}
+            testId="sync-cloud"
+            onPress={() => {
+              run(() => game.syncCloud());
+            }}
+          >
+            {t('settings.cloud.sync')}
+          </Button>
+        )}
+      </div>
+      {account && (
+        <div class="row">
+          {step === 'confirm_delete' ? (
+            <>
+              <Button
+                small
+                variant="ghost"
+                disabled={working}
+                testId="delete-no"
+                onPress={() => {
+                  setStep('none');
+                }}
+              >
+                {t('settings.deleteNo')}
+              </Button>
+              <Button
+                small
+                variant="danger"
+                disabled={working}
+                testId="delete-yes"
+                onPress={() => {
+                  run(async () => {
+                    if (await game.deleteAccount()) setStep('none');
+                  });
+                }}
+              >
+                {t('settings.deleteYes')}
+              </Button>
+            </>
+          ) : (
+            <Button
+              small
+              variant="ghost"
+              disabled={working}
+              testId="delete-account"
+              onPress={() => {
+                setStep('confirm_delete');
+              }}
+            >
+              {t('settings.delete')}
+            </Button>
+          )}
+        </div>
+      )}
+    </section>
   );
 }
 

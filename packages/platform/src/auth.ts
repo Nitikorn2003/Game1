@@ -19,6 +19,8 @@ export interface AuthService {
   switchToGoogle(): Promise<LinkResult>;
   /** Deletes the sign-in account. Delete its server data first, while the token still works. */
   deleteAccount(): Promise<void>;
+  /** Forgets the account on this device, after the server deleted it. */
+  signOut(): Promise<void>;
 }
 
 /** Signed out for good: the browser version has no server, so it never signs in. */
@@ -28,6 +30,7 @@ export const noAuth: AuthService = {
   linkGoogle: () => Promise.resolve('failed'),
   switchToGoogle: () => Promise.resolve('failed'),
   deleteAccount: () => Promise.resolve(),
+  signOut: () => Promise.resolve(),
 };
 
 interface FirebaseUser {
@@ -44,6 +47,7 @@ export interface FirebaseAuthenticationPlugin {
   linkWithGoogle(): Promise<{ user: FirebaseUser | null }>;
   getIdToken(options?: { forceRefresh: boolean }): Promise<{ token: string }>;
   deleteUser(): Promise<void>;
+  signOut(): Promise<void>;
 }
 
 const view = (user: FirebaseUser): Account => ({ playerId: user.uid, guest: user.isAnonymous, email: user.email });
@@ -107,7 +111,30 @@ export class FirebaseAuth implements AuthService {
   }
 
   async deleteAccount(): Promise<void> {
-    await this.firebase.deleteUser();
+    try {
+      await this.firebase.deleteUser();
+    } catch (err) {
+      if (codeOf(err) !== 'auth/requires-recent-login') throw err;
+      const current = (await this.firebase.getCurrentUser()).user;
+      if (!current || current.isAnonymous) {
+        // A guest cannot sign in again. Its data is already gone from the server and the empty
+        // Firebase record holds nothing personal, so leaving it is all that is left to do.
+        await this.firebase.signOut();
+        return;
+      }
+      // Firebase asks a Google account for a fresh sign-in first. If the player picks another
+      // Google account in that sheet, that one must not be deleted instead.
+      const { user } = await this.firebase.signInWithGoogle();
+      if (user?.uid !== current.uid) {
+        await this.firebase.signOut();
+        throw new Error('Signed in with a different Google account than the one being deleted.', { cause: err });
+      }
+      await this.firebase.deleteUser();
+    }
+  }
+
+  async signOut(): Promise<void> {
+    await this.firebase.signOut();
   }
 
   private async signIn(): Promise<Account | null> {

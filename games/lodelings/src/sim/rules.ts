@@ -1,7 +1,7 @@
 import { Rng, bulkCost, hashString, isNewDay, maxAffordable } from '@game1/engine';
 import * as C from './content.js';
 import type { AdPlacement, EggKind, Element, Entitlement, GearId, QuestMetric, RelicId, SkillId, SpeciesId } from './content.js';
-import type { GameState, OfflineReport, Quest } from './state.js';
+import { SETTLED_KEEP, type GameState, type OfflineReport, type Quest } from './state.js';
 
 /** What happened during an action, for the screen to animate. The state is already updated. */
 export type SimEvent =
@@ -872,10 +872,12 @@ export function recordInterstitial(state: GameState, c: Pick<Ctx, 'now' | 'day'>
  * Applies one wallet settlement from the server: currencies moved from the server wallet into
  * this save. Each settlement id is applied at most once, so a repeated answer grants nothing.
  */
-export function applySettlement(state: GameState, id: string, amounts: Readonly<Record<string, number>>, now: number): boolean {
-  if (state.shop.settled.includes(id)) return false;
+export function applySettlement(state: GameState, id: string, amounts: Readonly<Record<string, number>>, now: number, at = now): boolean {
+  if (state.shop.settled.some((s) => s.id === id)) return false;
+  const applied: Record<string, number> = {};
   for (const [currency, amount] of Object.entries(amounts)) {
     if (!Number.isSafeInteger(amount) || amount === 0) continue;
+    applied[currency] = amount;
     if (currency === 'gems') state.gems += amount;
     const egg = /^egg_(pebble|geode|prism)$/.exec(currency)?.[1] as EggKind | undefined;
     if (egg) {
@@ -886,9 +888,26 @@ export function applySettlement(state: GameState, id: string, amounts: Readonly<
       }
     }
   }
-  state.shop.settled = [...state.shop.settled, id].slice(-50);
+  state.shop.settled = [...state.shop.settled, { id, amounts: applied, at }].sort((a, b) => a.at - b.at).slice(-SETTLED_KEEP);
   autoIncubate(state, now);
   return true;
+}
+
+/**
+ * Applies the settlements `from` received that `into` did not, so that when one save replaces
+ * another (a cloud save from another phone, or a pasted one), nothing bought on either is lost.
+ * Returns how many it applied.
+ */
+export function mergeSettlements(into: GameState, from: GameState, now: number): number {
+  const known = new Set(into.shop.settled.map((s) => s.id));
+  // A full list has dropped its oldest entries, and `from` may still list those.
+  const oldest = into.shop.settled.length >= SETTLED_KEEP ? Math.min(...into.shop.settled.map((s) => s.at)) : Number.NEGATIVE_INFINITY;
+  let applied = 0;
+  for (const s of from.shop.settled) {
+    if (known.has(s.id) || s.at < oldest) continue;
+    if (applySettlement(into, s.id, s.amounts, now, s.at)) applied += 1;
+  }
+  return applied;
 }
 
 export function setEntitlements(state: GameState, entitlements: readonly string[]): void {

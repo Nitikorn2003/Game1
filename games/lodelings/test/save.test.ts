@@ -60,6 +60,19 @@ describe('Lodelings saves', () => {
     expect(repaired.incubators).toEqual([{ kind: 'pebble', startedAt: 5, readyAt: 5 }, null, null]);
   });
 
+  it('keep each settlement with its amounts, and read the ids-only list of early test saves', () => {
+    const state = newBotGame(3);
+    R.applySettlement(state, 'abc-123', { gems: 550, egg_prism: 1, nothing: 0 }, 1000);
+    expect(roundTrip(state).shop.settled).toEqual([{ id: 'abc-123', amounts: { gems: 550, egg_prism: 1 }, at: 1000 }]);
+
+    const data = JSON.parse(JSON.stringify(state)) as { shop: { settled: unknown[] } };
+    data.shop.settled = ['old-1', 'old-1', 'bad id!', { id: 'new-1', amounts: { gems: 1.5, eggs: 2 }, at: 5 }, { amounts: {} }];
+    expect(restoreState(data, R.blockHp).shop.settled).toEqual([
+      { id: 'old-1', amounts: {}, at: 0 },
+      { id: 'new-1', amounts: { eggs: 2 }, at: 5 },
+    ]);
+  });
+
   it('fill in everything missing from an almost empty save', () => {
     const repaired = restoreState({ createdAt: 1000 }, R.blockHp);
     expect(repaired.depth).toBe(1);

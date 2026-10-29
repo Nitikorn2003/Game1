@@ -5,10 +5,11 @@ import type { PlayerAuthenticator } from './auth/player-auth.js';
 import type { PubSubPushVerifier } from './auth/pubsub-auth.js';
 import type { Catalog, GameConfig } from './catalog.js';
 import type { Pool } from './db/pool.js';
-import { AppError, badRequest, unauthorized, unknownGame, upstreamUnavailable } from './errors.js';
+import { AppError, badRequest, signInDeletionFailed, unauthorized, unknownGame, upstreamUnavailable } from './errors.js';
 import { PlayApiError } from './play/play-api.js';
 import type { PurchaseService } from './purchases/service.js';
 import { deletePlayerData } from './players/delete-player.js';
+import { SignInAccountsError, type SignInAccounts } from './players/sign-in-accounts.js';
 import { handleRtdnPush } from './rtdn/handler.js';
 import { MAX_SAVE_LENGTH, readCloudSave, writeCloudSave } from './saves/cloud-saves.js';
 import { getWallet } from './wallet/ledger.js';
@@ -24,6 +25,8 @@ export interface AppDeps {
   verifyRateLimitPerMinute: number;
   /** Per player, for settlements and cloud save writes. */
   playerWriteRateLimitPerMinute?: number;
+  /** Deletes sign-in accounts with the player's data; without it the phone deletes its own. */
+  signInAccounts?: SignInAccounts;
   /** Omit to disable logging (tests). */
   logger?: FastifyBaseLogger;
   trustProxy?: FastifyServerOptions['trustProxy'];
@@ -186,11 +189,23 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     });
   });
 
-  /** Deletes the player's cloud save and account data for this game (purchase records stay). */
+  /**
+   * Deletes the player's data in every game (purchase records stay) and, when the server can,
+   * their sign-in account. signInDeleted false means the phone must delete the sign-in itself.
+   * Safe to repeat after a failure.
+   */
   app.delete('/v1/games/:gameId/player', { onRequest: requirePlayer, config: playerWriteLimit }, async (request) => {
-    const game = resolveGame(request);
-    await deletePlayerData(deps.pool, game.gameId, currentPlayer(request));
-    return { deleted: true };
+    resolveGame(request);
+    const playerId = currentPlayer(request);
+    await deletePlayerData(deps.pool, playerId);
+    if (!deps.signInAccounts) return { deleted: true, signInDeleted: false };
+    try {
+      await deps.signInAccounts.delete(playerId);
+    } catch (err) {
+      request.log.warn({ err: err instanceof Error ? err.message : String(err) }, 'sign-in account deletion failed');
+      throw signInDeletionFailed(err instanceof SignInAccountsError ? err.retryable : true);
+    }
+    return { deleted: true, signInDeleted: true };
   });
 
   /** Pub/Sub push endpoint for Google Play real-time developer notifications. */

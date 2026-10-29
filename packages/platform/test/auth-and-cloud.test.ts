@@ -11,6 +11,11 @@ class FakeFirebase implements FirebaseAuthenticationPlugin {
   offline = false;
   linkError: { code?: string; message: string } | null = null;
   signIns = 0;
+  /** Like Firebase after a while: deleting needs a fresh sign-in first. */
+  staleLogin = false;
+  /** The Google account picked in the sign-in sheet. */
+  googleAccount = 'google-user';
+  readonly deleted: string[] = [];
   getCurrentUser() {
     return this.offline ? Promise.reject(new Error('offline')) : Promise.resolve({ user: this.user });
   }
@@ -20,7 +25,8 @@ class FakeFirebase implements FirebaseAuthenticationPlugin {
     return Promise.resolve({ user: this.user });
   }
   signInWithGoogle() {
-    this.user = { uid: 'google-user', isAnonymous: false, email: 'player@example.com' };
+    this.user = { uid: this.googleAccount, isAnonymous: false, email: 'player@example.com' };
+    this.staleLogin = false;
     return Promise.resolve({ user: this.user });
   }
   linkWithGoogle() {
@@ -32,6 +38,12 @@ class FakeFirebase implements FirebaseAuthenticationPlugin {
     return Promise.resolve({ token: `${this.user?.uid ?? 'none'}${options?.forceRefresh ? ':fresh' : ''}` });
   }
   deleteUser(): Promise<void> {
+    if (this.staleLogin) return Promise.reject(Object.assign(new Error('This operation is sensitive and requires recent authentication.'), { code: 'auth/requires-recent-login' }));
+    if (this.user) this.deleted.push(this.user.uid);
+    this.user = null;
+    return Promise.resolve();
+  }
+  signOut(): Promise<void> {
     this.user = null;
     return Promise.resolve();
   }
@@ -73,6 +85,38 @@ describe('Firebase sign-in', () => {
     expect(await auth.switchToGoogle()).toBe('linked');
     expect((await auth.account())?.playerId).toBe('google-user');
   });
+
+  it('deletes the account, signing in to Google again first when Firebase asks for it', async () => {
+    const firebase = new FakeFirebase();
+    const auth = new FirebaseAuth(firebase);
+    await auth.switchToGoogle();
+    firebase.staleLogin = true;
+    await auth.deleteAccount();
+    expect(firebase.deleted).toEqual(['google-user']);
+    // The next start is a new guest.
+    expect(await auth.account()).toMatchObject({ playerId: 'guest-1', guest: true });
+  });
+
+  it('never deletes a different Google account picked in that sign-in sheet', async () => {
+    const firebase = new FakeFirebase();
+    const auth = new FirebaseAuth(firebase);
+    await auth.switchToGoogle();
+    firebase.staleLogin = true;
+    firebase.googleAccount = 'someone-else';
+    await expect(auth.deleteAccount()).rejects.toThrow('different Google account');
+    expect(firebase.deleted).toEqual([]);
+    expect(firebase.user).toBeNull();
+  });
+
+  it('leaves a guest account that Firebase will not delete without a sign-in it cannot do', async () => {
+    const firebase = new FakeFirebase();
+    const auth = new FirebaseAuth(firebase);
+    await auth.account();
+    firebase.staleLogin = true;
+    await auth.deleteAccount();
+    expect(firebase.deleted).toEqual([]);
+    expect(await auth.account()).toMatchObject({ playerId: 'guest-2', guest: true });
+  });
 });
 
 /** The server's cloud save rules: a write must name the revision it started from. */
@@ -102,22 +146,31 @@ class FakeCloud implements CloudSaveApi {
 
 /** A device whose save is just its progress number, written as text. */
 class Device implements CloudSyncHost {
-  constructor(public save: string) {}
+  readonly absorbed: string[] = [];
+  constructor(
+    public save: string,
+    private readonly merges = false,
+  ) {}
   current(): string {
     return this.save;
   }
   progress(save: string): number {
     return Number(save.split(':')[1]);
   }
-  adopt(save: string): Promise<boolean> {
-    if (!save.startsWith('save:')) return Promise.resolve(false);
-    this.save = save;
-    return Promise.resolve(true);
+  adopt(save: string): Promise<'adopted' | 'merged' | 'unreadable'> {
+    if (!save.startsWith('save:')) return Promise.resolve('unreadable');
+    this.save = this.merges ? `${save}:merged` : save;
+    return Promise.resolve(this.merges ? 'merged' : 'adopted');
+  }
+  absorb(save: string): Promise<void> {
+    this.absorbed.push(save);
+    if (this.merges) this.save = `${this.save}:merged`;
+    return Promise.resolve();
   }
 }
 
-function device(cloud: FakeCloud, save: string, player: string | null = 'p1') {
-  const host = new Device(save);
+function device(cloud: FakeCloud, save: string, player: string | null = 'p1', merges = false) {
+  const host = new Device(save, merges);
   const storage = new MemoryStore();
   return { host, storage, sync: new CloudSync(cloud, storage, host, () => Promise.resolve(player)) };
 }
@@ -168,6 +221,38 @@ describe('cloud save sync', () => {
     expect(await phone.sync.sync()).toBe('kept_local');
     expect(cloud.save).toMatchObject({ revision: 4, data: 'save:90' });
     expect(await phone.sync.sync()).toBe('unchanged');
+  });
+
+  it('lets the save that won take over what the cloud copy must not lose before uploading', async () => {
+    const cloud = new FakeCloud();
+    const phone = device(cloud, 'save:10', 'p1', true);
+    await phone.sync.sync();
+    cloud.otherDeviceWrites('save:20');
+    phone.host.save = 'save:90';
+    expect(await phone.sync.sync()).toBe('kept_local');
+    expect(phone.host.absorbed).toEqual(['save:20']);
+    expect(cloud.save?.data).toBe('save:90:merged');
+    expect(await phone.sync.sync()).toBe('unchanged');
+  });
+
+  it('puts what the adopted save took over back in the cloud', async () => {
+    const cloud = new FakeCloud();
+    cloud.otherDeviceWrites('save:500');
+    const phone = device(cloud, 'save:3', 'p1', true);
+    expect(await phone.sync.sync()).toBe('downloaded');
+    expect(cloud.save).toMatchObject({ revision: 2, data: 'save:500:merged' });
+    expect(await phone.sync.sync()).toBe('unchanged');
+  });
+
+  it('tries again later when adopting the cloud save has to wait', async () => {
+    const cloud = new FakeCloud();
+    const phone = device(cloud, 'save:10');
+    await phone.sync.sync();
+    cloud.otherDeviceWrites('save:50');
+    phone.host.adopt = () => Promise.reject(new Error('a purchase is still being settled'));
+    expect(await phone.sync.sync()).toBe('offline');
+    expect(cloud.save?.data).toBe('save:50');
+    expect(phone.host.save).toBe('save:10');
   });
 
   it('resolves a write that loses a race against another device', async () => {

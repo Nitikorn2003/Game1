@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { MAX_SAVE_LENGTH } from '../src/saves/cloud-saves.js';
-import { Harness, voidedNotification } from './support/harness.js';
+import { FIREBASE_PROJECT, Harness, voidedNotification } from './support/harness.js';
 
 let h: Harness;
 
@@ -198,21 +198,72 @@ describe('cloud saves', () => {
 });
 
 describe('deleting a player', () => {
-  it('removes the cloud save, settlements and billing account but keeps the payment records', async () => {
+  it('removes the cloud saves, settlements and billing account but keeps the payment records', async () => {
     await granted('player-a', 'gems_100');
     await h.settle('player-a', 'settle-0001');
     await h.putSave('player-a', null, 'save');
+    await h.putSave('player-a', null, 'save in the other game', 'game2');
     await h.putSave('player-b', null, 'other player');
 
     const res = await h.call('DELETE', '/v1/games/game1/player', { playerId: 'player-a' });
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ deleted: true });
+    // Without FIREBASE_PROJECT_ID the phone deletes its own sign-in account.
+    expect(res.body).toEqual({ deleted: true, signInDeleted: false });
     expect((await h.call('GET', '/v1/games/game1/save', { playerId: 'player-a' })).body).toEqual({ save: null });
+    // The sign-in account is shared by every game on the server, so its data goes everywhere.
+    expect((await h.call('GET', '/v1/games/game2/save', { playerId: 'player-a' })).body).toEqual({ save: null });
     expect((await h.call('GET', '/v1/games/game1/save', { playerId: 'player-b' })).body.save.data).toBe('other player');
     expect((await h.pool.query('SELECT 1 FROM wallet_settlements WHERE player_id = $1', ['player-a'])).rowCount).toBe(0);
     expect((await h.pool.query('SELECT 1 FROM player_billing_accounts WHERE player_id = $1', ['player-a'])).rowCount).toBe(0);
     expect((await h.pool.query('SELECT 1 FROM play_purchases WHERE player_id = $1', ['player-a'])).rowCount).toBe(1);
     expect((await h.call('DELETE', '/v1/games/game1/player')).status).toBe(401);
+  });
+});
+
+describe('deleting a player with sign-in account deletion turned on', () => {
+  beforeEach(async () => {
+    await h.reset({ deleteSignInAccounts: true });
+    h.identity.users.add('player-a');
+  });
+
+  it('deletes the Firebase account with the server\'s credentials', async () => {
+    await h.putSave('player-a', null, 'save');
+    const res = await h.call('DELETE', '/v1/games/game1/player', { playerId: 'player-a' });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ deleted: true, signInDeleted: true });
+    expect(h.identity.users.has('player-a')).toBe(false);
+    expect(h.identity.calls).toEqual([{ project: FIREBASE_PROJECT, localId: 'player-a', authorization: 'Bearer fake-access-token' }]);
+    expect((await h.call('GET', '/v1/games/game1/save', { playerId: 'player-a' })).body).toEqual({ save: null });
+  });
+
+  it('counts an account that is already gone as deleted, so a repeat succeeds', async () => {
+    expect((await h.call('DELETE', '/v1/games/game1/player', { playerId: 'player-a' })).body.signInDeleted).toBe(true);
+    const again = await h.call('DELETE', '/v1/games/game1/player', { playerId: 'player-a' });
+    expect(again.status).toBe(200);
+    expect(again.body).toEqual({ deleted: true, signInDeleted: true });
+  });
+
+  it('asks the phone to try again when Firebase is down, after the data is already gone', async () => {
+    await h.putSave('player-a', null, 'save');
+    h.identity.failures = [503];
+
+    const failed = await h.call('DELETE', '/v1/games/game1/player', { playerId: 'player-a' });
+    expect(failed.status).toBe(503);
+    expect(failed.body.error).toMatchObject({ code: 'sign_in_deletion_failed', retryable: true });
+    expect((await h.call('GET', '/v1/games/game1/save', { playerId: 'player-a' })).body).toEqual({ save: null });
+    expect(h.identity.users.has('player-a')).toBe(true);
+
+    const retried = await h.call('DELETE', '/v1/games/game1/player', { playerId: 'player-a' });
+    expect(retried.body).toEqual({ deleted: true, signInDeleted: true });
+    expect(h.identity.users.has('player-a')).toBe(false);
+  });
+
+  it('reports missing permissions as a lasting failure', async () => {
+    h.identity.failures = [403];
+    const res = await h.call('DELETE', '/v1/games/game1/player', { playerId: 'player-a' });
+    expect(res.status).toBe(502);
+    expect(res.body.error).toMatchObject({ code: 'sign_in_deletion_failed', retryable: false });
   });
 });
