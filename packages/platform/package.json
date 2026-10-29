@@ -1,0 +1,14 @@
+{
+  "name": "@game1/platform",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Device services for Game1 games behind small interfaces: storage, ads, purchases, sign-in, cloud saves, haptics. Web test versions for development, Capacitor versions for Android.",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@game1/engine": "*"
+  }
+}

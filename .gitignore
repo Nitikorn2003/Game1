@@ -11,3 +11,16 @@ Thumbs.db
 *.keystore
 *service-account*.json
 *credentials*.json
+
+# Game workspaces (packages/, games/, tools/).
+node_modules/
+dist/
+dist-single/
+coverage/
+test-results/
+playwright-report/
+*.log
+# Per-game Firebase and AdMob configuration stays out of the public repo.
+google-services.json
+GoogleService-Info.plist
+games/*/release.config.json

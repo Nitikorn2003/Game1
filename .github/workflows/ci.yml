@@ -13,6 +13,36 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  games:
+    name: Games and shared framework
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - name: Audit production dependencies
+        run: npm audit --omit=dev
+      - run: npx playwright install --with-deps chromium
+      - name: Play the games in a phone-sized browser
+        run: npm run e2e
+      - if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: e2e-results
+          path: games/*/test-results/
+          retention-days: 7
+
   iap-server:
     name: Purchase server (Node ${{ matrix.node }})
     runs-on: ubuntu-24.04

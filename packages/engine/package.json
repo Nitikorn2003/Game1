@@ -1,0 +1,11 @@
+{
+  "name": "@game1/engine",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Game-agnostic core for Game1 games: time, loop, saves, random numbers, economy math, formatting, i18n.",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

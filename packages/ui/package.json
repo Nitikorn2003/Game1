@@ -1,0 +1,15 @@
+{
+  "name": "@game1/ui",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shared Preact building blocks for Game1 games: buttons, panels, tabs, modals, toasts, bars and the theme variables they use.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./ui.css": "./src/ui.css"
+  },
+  "dependencies": {
+    "@game1/engine": "*",
+    "preact": "10.29.8"
+  }
+}
