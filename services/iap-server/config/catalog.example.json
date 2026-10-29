@@ -283,6 +283,54 @@
           "entitlement": "field_collection"
         }
       ]
+    },
+    {
+      "gameId": "tidegarden",
+      "packageName": "com.example.tidegarden",
+      "products": [
+        {
+          "productId": "coins_small",
+          "type": "consumable",
+          "grants": {
+            "coins": 500
+          }
+        },
+        {
+          "productId": "coins_medium",
+          "type": "consumable",
+          "grants": {
+            "coins": 3000
+          }
+        },
+        {
+          "productId": "coins_large",
+          "type": "consumable",
+          "grants": {
+            "coins": 7000
+          }
+        },
+        {
+          "productId": "diver_kit",
+          "type": "non_consumable",
+          "grants": {
+            "coins": 1000,
+            "claw": 5,
+            "tide": 5,
+            "crab": 5
+          },
+          "entitlement": "diver_kit"
+        },
+        {
+          "productId": "remove_ads",
+          "type": "non_consumable",
+          "entitlement": "remove_ads"
+        },
+        {
+          "productId": "reef_collection",
+          "type": "non_consumable",
+          "entitlement": "reef_collection"
+        }
+      ]
     }
   ]
 }
