@@ -1,5 +1,5 @@
 import { ManualClock, MemoryStore, exportSave, localDayKey } from '@game1/engine';
-import { TestStore, type StoreService } from '@game1/platform';
+import { TestStore, noStore, type StoreService } from '@game1/platform';
 import { FakeAds, manualFrames, settle } from '@game1/shell/testing';
 import { describe, expect, it } from 'vitest';
 import { CATALOG } from '../src/catalog.js';
@@ -223,6 +223,28 @@ describe('ads and purchases', () => {
     await settle(game);
     r.clock.advance(60 * 60_000);
     expect(game.adBreakAllowed()).toBe(false);
+  });
+
+  it('in the ads-only edition sells nothing, never asks for a wallet and still pays ad rewards', async () => {
+    const calls: string[] = [];
+    const store: StoreService = {
+      ...noStore,
+      products: (ids) => {
+        calls.push('products');
+        return noStore.products(ids);
+      },
+      wallet: () => {
+        calls.push('wallet');
+        return noStore.wallet();
+      },
+    };
+    const game = await started(rig({ store }));
+    expect(game.sells).toBe(false);
+    expect(await game.syncPurchases(false)).toBe(false);
+    expect(calls).toEqual([]);
+    expect(game.storeError).toBe(false);
+    expect(await game.watchAd('free_spools')).toBe(true);
+    expect(game.state.spools).toBe(C.FREE_SPOOLS);
   });
 
   it('gives No Ad Breaks owners the ad rewards without showing ads', async () => {
