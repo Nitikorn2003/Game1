@@ -23,7 +23,6 @@ export const en = {
   'scene.guardian': 'Guardian',
   'scene.weakTo': 'Weak to {element}',
   'scene.challenge': 'Challenge Guardian',
-  'scene.farming': 'Mining for strength. Challenge again when ready.',
   'scene.retryAd': '+15s retry',
   'scene.blessing': 'Blessing x2 ore {time}',
 

@@ -188,31 +188,28 @@ export function Scene(): JSX.Element {
 
       {challengeable && (
         <div class="farming" data-testid="farming">
-          <p>{t('scene.farming')}</p>
-          <div class="row">
+          <Button
+            small
+            testId="challenge"
+            onPress={() => {
+              game.challengeGuardian();
+            }}
+          >
+            <Icon name="sword" size={18} /> {t('scene.challenge')}
+          </Button>
+          {game.adOffered('guardian_retry') && (
             <Button
               small
-              testId="challenge"
+              variant="ad"
+              testId="retry-ad"
+              disabled={game.busy}
               onPress={() => {
-                game.challengeGuardian();
+                void game.watchAd('guardian_retry');
               }}
             >
-              <Icon name="sword" size={18} /> {t('scene.challenge')}
+              <Icon name="play" size={18} /> {t('scene.retryAd')}
             </Button>
-            {game.adOffered('guardian_retry') && (
-              <Button
-                small
-                variant="ad"
-                testId="retry-ad"
-                disabled={game.busy}
-                onPress={() => {
-                  void game.watchAd('guardian_retry');
-                }}
-              >
-                <Icon name="play" size={18} /> {t('scene.retryAd')}
-              </Button>
-            )}
-          </div>
+          )}
         </div>
       )}
 

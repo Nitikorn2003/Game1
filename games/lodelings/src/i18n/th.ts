@@ -24,7 +24,6 @@ export const th: Partial<Record<StringKey, string>> = {
   'scene.guardian': 'ผู้พิทักษ์',
   'scene.weakTo': 'แพ้ธาตุ{element}',
   'scene.challenge': 'ท้าสู้ผู้พิทักษ์',
-  'scene.farming': 'ขุดเก็บแรงไปก่อน พร้อมเมื่อไรก็ท้าสู้ใหม่',
   'scene.retryAd': 'สู้ใหม่ +15 วิ',
   'scene.blessing': 'พรนักขุด แร่ x2 {time}',
 

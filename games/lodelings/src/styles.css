@@ -365,23 +365,21 @@ button {
   color: var(--g1-bad);
   animation: pip-now 0.5s ease-in-out infinite alternate;
 }
+/* Beside the rock, not over it: after losing to a Guardian the player keeps tapping the rock. */
 .farming {
   position: absolute;
   z-index: 2;
-  left: 50%;
-  bottom: 70px;
-  transform: translateX(-50%);
-  width: min(92%, 380px);
-  padding: 8px 10px;
-  border-radius: 14px;
-  background: rgba(20, 14, 12, 0.86);
-  box-shadow: var(--g1-shadow), inset 0 0 0 1px var(--g1-line);
-  text-align: center;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: min(108px, 28vw);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
-.farming p {
-  margin: 0 0 6px;
-  font-size: 13px;
-  color: var(--g1-text-dim);
+.farming .g1-btn {
+  width: 100%;
+  padding: 6px 8px;
 }
 .team {
   position: relative;

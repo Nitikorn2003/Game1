@@ -160,3 +160,24 @@ test('a Guardian fight can be lost, farmed and won', async ({ page }) => {
   await expect(page.getByText(/defeated!/)).toBeVisible();
   await expect(page.getByTestId('depth')).not.toContainText('Depth 5');
 });
+
+test('on a small phone the Guardian buttons leave the rock free to tap', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 640 });
+  await openGame(page);
+  await loadSave(
+    page,
+    makeSave((s) => {
+      s.depth = 5;
+      s.block = 3;
+      s.maxDepth = 5;
+      s.bestDepth = 5;
+      s.farming = true;
+      s.roster = { mossling: { level: 1, stars: 0 } };
+      s.team = ['mossling'];
+      s.incubators = [null];
+    }),
+  );
+  await expect(page.getByTestId('challenge')).toBeVisible();
+  // Fails when anything covers the middle of the rock.
+  await page.getByTestId('rock').click({ trial: true, timeout: 2000 });
+});
