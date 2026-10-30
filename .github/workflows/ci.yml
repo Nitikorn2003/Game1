@@ -1,0 +1,168 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  games:
+    name: Games and shared framework
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - name: Audit production dependencies
+        run: npm audit --omit=dev
+      - run: npx playwright install --with-deps chromium
+      - name: Play the games in a phone-sized browser
+        run: npm run e2e
+      - if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: e2e-results
+          path: |
+            games/*/test-results/
+            templates/*/test-results/
+          retention-days: 7
+
+  iap-server:
+    name: Purchase server (Node ${{ matrix.node }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24]
+    defaults:
+      run:
+        working-directory: services/iap-server
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: iap_test
+          # A throwaway database that only exists for this job.
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      TEST_DATABASE_URL: postgres://postgres@127.0.0.1:5432/iap_test
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+          cache-dependency-path: services/iap-server/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - name: Audit production dependencies
+        run: npm audit --omit=dev
+
+  android-core:
+    name: Android purchase logic
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: clients/android
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+      # Also checks that gradle-wrapper.jar is an official Gradle release.
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
+      - run: ./gradlew -p billing-core test --console=plain
+
+  android-play:
+    name: Android Play Billing adapter
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: clients/android
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
+      - run: ./gradlew :billing-play:assembleRelease :billing-play:testDebugUnitTest --console=plain
+
+  game-android:
+    name: Android app (${{ matrix.game }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        game: [lodelings, quiltnook, skyjars, lotuscanal, ricefield, tidegarden, bloomhive, crumblane]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
+      - run: npm ci
+      # No google-services.json or release settings here: test ads, no sign-in or purchases.
+      - name: Build the debug app
+        run: npm run android:apk -w games/${{ matrix.game }}
+      - name: Billing plugin and purchase client tests
+        working-directory: games/${{ matrix.game }}/android
+        run: ./gradlew :game1-capacitor-billing:testDebugUnitTest --console=plain
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ${{ matrix.game }}-debug-apk
+          path: games/${{ matrix.game }}/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14

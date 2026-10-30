@@ -1,0 +1,1025 @@
+/* Sky Jars: a night sky, jars of glowing starlight and gold stardust. */
+:root {
+  --g1-bg: #0b0f2e;
+  --g1-surface: #171b4a;
+  --g1-surface-2: #222861;
+  --g1-line: rgba(200, 208, 255, 0.16);
+  --g1-text: #eef0ff;
+  --g1-text-dim: #aeb3dc;
+  --g1-accent: #ffd36e;
+  --g1-accent-ink: #2a1c00;
+  --g1-good: #7fe0b0;
+  --g1-bad: #ff8a8a;
+  --g1-gem: #8fd3ff;
+  --g1-ad: #b9a2ff;
+  --g1-font: 'K2D', 'Noto Sans Thai', 'Leelawadee UI', system-ui, sans-serif;
+  --g1-shadow: 0 6px 18px rgba(2, 4, 20, 0.45);
+  --g1-note-bg: rgba(255, 211, 110, 0.12);
+  --g1-note-text: #ffe7b0;
+  --g1-note-bad-bg: rgba(255, 138, 138, 0.14);
+  --g1-note-bad-text: #ffc9c9;
+  --g1-field-bg: #070a22;
+  --g1-bar-bg: rgba(200, 208, 255, 0.12);
+  --g1-toast-bg: rgba(16, 19, 56, 0.96);
+  --g1-toast-text: #fff6dc;
+  /* Titles are set in Fahkwang, a little old-fashioned, like a star atlas. */
+  --sj-title: 'Fahkwang', 'K2D', 'Noto Sans Thai', serif;
+  --sj-glass: rgba(24, 28, 78, 0.72);
+  --sj-gold-line: rgba(255, 211, 110, 0.35);
+  color-scheme: dark;
+}
+
+html {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: #05071a;
+  overscroll-behavior: none;
+}
+body {
+  display: flex;
+  justify-content: center;
+}
+#app {
+  width: 100%;
+  max-width: 520px;
+  height: 100%;
+}
+.boot-error {
+  margin: 0;
+  padding: 40px 24px;
+  color: #eef0ff;
+  font: 500 17px/1.5 'K2D', system-ui, sans-serif;
+  text-align: center;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  isolation: isolate;
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.7);
+}
+.home,
+.play {
+  position: relative;
+  z-index: 1;
+}
+
+/* The shared pieces, in the colours of the night. */
+.g1-modal {
+  background: linear-gradient(180deg, #1d2257, #141844);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), inset 0 0 0 1px var(--sj-gold-line);
+}
+.g1-modal h2 {
+  font-family: var(--sj-title);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.g1-modal-backdrop {
+  background: rgba(3, 4, 18, 0.66);
+}
+.g1-btn:disabled {
+  filter: grayscale(0.6);
+  opacity: 0.5;
+}
+
+/* ---------------------------------------------------------------------------------------
+   The sky behind everything */
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.backdrop--twilight {
+  background: linear-gradient(180deg, #090c2a 0%, #171852 52%, #3b2267 100%);
+}
+.backdrop--moonrise {
+  background: linear-gradient(180deg, #040921 0%, #0c1d4a 58%, #1d3a6e 100%);
+}
+.backdrop--aurora {
+  background: linear-gradient(180deg, #030f1d 0%, #082035 55%, #0d2c3e 100%);
+}
+.backdrop--meteors {
+  background: linear-gradient(180deg, #06051a 0%, #150d33 55%, #2a1440 100%);
+}
+.starfield {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.twinkle {
+  fill: #fff;
+  opacity: 0.7;
+  animation: twinkle 5s ease-in-out infinite;
+}
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+/* High in a corner, clear of the jars and the tools, and soft enough to read text over. */
+.moon {
+  position: absolute;
+  right: -34px;
+  top: 76px;
+  width: 118px;
+  height: 118px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 62%, rgba(190, 170, 120, 0.35) 0 9%, transparent 10%),
+    radial-gradient(circle at 58% 30%, rgba(190, 170, 120, 0.3) 0 6%, transparent 7%),
+    radial-gradient(circle at 38% 36%, #fffbe8, #f3e3b0 55%, #d9c287 100%);
+  box-shadow: 0 0 40px 12px rgba(255, 238, 190, 0.16), 0 0 110px 40px rgba(255, 238, 190, 0.07);
+  opacity: 0.6;
+}
+.aurora {
+  position: absolute;
+  inset: -10% -20% 40%;
+  filter: blur(28px);
+  opacity: 0.75;
+}
+.aurora span {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 34%;
+  border-radius: 50%;
+  animation: aurora 14s ease-in-out infinite alternate;
+}
+.aurora span:nth-child(1) {
+  top: 10%;
+  background: linear-gradient(90deg, transparent, rgba(80, 255, 180, 0.55), rgba(60, 200, 255, 0.4), transparent);
+}
+.aurora span:nth-child(2) {
+  top: 32%;
+  background: linear-gradient(90deg, transparent, rgba(150, 110, 255, 0.45), rgba(80, 255, 200, 0.35), transparent);
+  animation-duration: 18s;
+}
+.aurora span:nth-child(3) {
+  top: 50%;
+  background: linear-gradient(90deg, transparent, rgba(60, 220, 255, 0.35), transparent);
+  animation-duration: 22s;
+}
+@keyframes aurora {
+  from {
+    transform: translateX(-12%) skewY(-4deg);
+  }
+  to {
+    transform: translateX(12%) skewY(4deg);
+  }
+}
+.meteors span {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 90px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.9));
+  opacity: 0;
+  transform: rotate(-35deg);
+  animation: meteor 7s linear infinite;
+}
+.meteors span:nth-child(1) {
+  left: 70%;
+}
+.meteors span:nth-child(2) {
+  left: 35%;
+  animation-delay: 2.6s;
+}
+.meteors span:nth-child(3) {
+  left: 90%;
+  animation-delay: 4.9s;
+}
+@keyframes meteor {
+  0% {
+    opacity: 0;
+    translate: 0 -40px;
+  }
+  4% {
+    opacity: 1;
+  }
+  14% {
+    opacity: 0;
+    translate: -170px 240px;
+  }
+  100% {
+    opacity: 0;
+    translate: -170px 240px;
+  }
+}
+
+/* ---------------------------------------------------------------------------------------
+   Bars and shared bits */
+
+.topbar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: max(6px, var(--g1-inset-top)) 8px 8px;
+  background: linear-gradient(180deg, rgba(8, 10, 34, 0.85), rgba(8, 10, 34, 0.35));
+  border-bottom: 1px solid var(--g1-line);
+}
+.brand {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 0 4px;
+  font-family: var(--sj-title);
+  font-size: 23px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: #ffe9b0;
+  text-shadow: 0 0 14px rgba(255, 211, 110, 0.45);
+}
+.topbar__title {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-family: var(--sj-title);
+  font-size: 20px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.res {
+  appearance: none;
+  border: 0;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 40px;
+  padding: 3px 12px 3px 6px;
+  border-radius: 999px;
+  background: rgba(4, 6, 26, 0.55);
+  color: #fff1c9;
+  box-shadow: inset 0 0 0 1px var(--sj-gold-line);
+  font: inherit;
+  font-weight: 700;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.iconbtn {
+  appearance: none;
+  border: 0;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(34, 40, 97, 0.75);
+  color: var(--g1-text);
+  box-shadow: inset 0 0 0 1px var(--g1-line);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.iconbtn:focus-visible,
+.res:focus-visible,
+.jarbtn:focus-visible,
+.tool:focus-visible,
+.pack:focus-visible,
+.atlas-card:focus-visible {
+  outline: 3px solid var(--g1-gem);
+  outline-offset: 2px;
+}
+.card {
+  position: relative;
+  background: var(--sj-glass);
+  border-radius: 18px;
+  padding: 14px;
+  box-shadow: inset 0 0 0 1px var(--g1-line), 0 8px 24px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(6px);
+}
+.owned {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--g1-good);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+/* ---------------------------------------------------------------------------------------
+   Home */
+
+.home {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.home__body {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 12px max(16px, var(--g1-inset-bottom));
+}
+.atlas-card {
+  appearance: none;
+  border: 0;
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  background: radial-gradient(circle at 22% 50%, rgba(255, 211, 110, 0.16), transparent 55%), var(--sj-glass);
+  box-shadow: inset 0 0 0 1px var(--sj-gold-line), 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+.atlas-card__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.atlas-card__name {
+  font-family: var(--sj-title);
+  font-size: 20px;
+  line-height: 1.3;
+  color: #ffe9b0;
+  text-wrap: balance;
+}
+.mode {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.mode h2 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-family: var(--sj-title);
+  font-size: 19px;
+  font-weight: 700;
+}
+.mode p {
+  margin: 0;
+}
+.mode__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.mode__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+.mode__streak {
+  color: #ffe7b0;
+  font-weight: 700;
+  font-size: 14px;
+}
+.mode--done {
+  opacity: 0.85;
+}
+.trio {
+  flex: none;
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+}
+.trio .jar {
+  width: 22px;
+}
+.home__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* ---------------------------------------------------------------------------------------
+   Constellations */
+
+.figure {
+  flex: none;
+  overflow: visible;
+}
+.figure__line {
+  stroke: rgba(200, 210, 255, 0.16);
+  stroke-width: 1.2;
+  stroke-dasharray: 2 3;
+}
+.figure__line--lit {
+  stroke: rgba(255, 233, 176, 0.75);
+  stroke-dasharray: none;
+  stroke-width: 1.6;
+}
+.figure__star {
+  fill: rgba(200, 210, 255, 0.3);
+}
+.figure__star--lit {
+  fill: #fff3c4;
+  filter: drop-shadow(0 0 3px rgba(255, 220, 140, 0.95));
+}
+.figure__star--flare {
+  animation: flare 1.4s ease-out 2;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@keyframes flare {
+  0% {
+    transform: scale(2.4);
+    opacity: 0.4;
+  }
+  60% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ---------------------------------------------------------------------------------------
+   Play */
+
+.play {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.goal {
+  margin: 6px 0 0;
+  text-align: center;
+  color: var(--g1-text-dim);
+}
+.shelf {
+  --gap: 10px;
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 22px;
+  padding: 8px 14px;
+}
+.shelf__row {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: var(--gap);
+  padding-bottom: 7px;
+}
+/* The ledge the jars stand on: a line of soft light. */
+.shelf__row::after {
+  content: '';
+  position: absolute;
+  left: 2%;
+  right: 2%;
+  bottom: 0;
+  height: 4px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, transparent, rgba(255, 220, 150, 0.45), transparent);
+  box-shadow: 0 2px 10px rgba(255, 220, 150, 0.25);
+}
+.jarbtn {
+  appearance: none;
+  border: 0;
+  margin: 0;
+  padding: 18px 0 0;
+  background: none;
+  color: inherit;
+  position: relative;
+  width: calc((100% - (var(--per-row) - 1) * var(--gap)) / var(--per-row));
+  max-width: 64px;
+  cursor: pointer;
+  touch-action: manipulation;
+  border-radius: 12px;
+}
+.jarbtn__mark {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  translate: -50% 0;
+  color: #ffe08a;
+  filter: drop-shadow(0 0 6px rgba(255, 220, 130, 0.9));
+  animation: bob 1s ease-in-out infinite;
+}
+.jarbtn__mark--to {
+  color: #9fe7ff;
+  filter: drop-shadow(0 0 6px rgba(140, 220, 255, 0.9));
+}
+@keyframes bob {
+  50% {
+    transform: translateY(-4px);
+  }
+}
+/* Over the middle of the shelf, on a dark pill, so it reads over the jars too. */
+.solved {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 22px 12px 18px;
+  border-radius: 999px;
+  background: rgba(8, 10, 34, 0.82);
+  box-shadow: inset 0 0 0 1px var(--sj-gold-line), 0 10px 30px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  white-space: nowrap;
+  animation: solved-in 600ms ease-out;
+}
+.solved strong {
+  font-family: var(--sj-title);
+  font-size: 34px;
+  color: #fff3c4;
+  text-shadow: 0 0 20px rgba(255, 211, 110, 0.8);
+}
+@keyframes solved-in {
+  from {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+}
+.tools {
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 6px 12px 0;
+}
+.tool {
+  appearance: none;
+  border: 0;
+  position: relative;
+  min-height: 62px;
+  padding: 6px 2px;
+  border-radius: 14px;
+  font: inherit;
+  color: var(--g1-text);
+  background: var(--sj-glass);
+  box-shadow: inset 0 0 0 1px var(--g1-line);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  cursor: pointer;
+}
+.tool:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.tool--active {
+  box-shadow: inset 0 0 0 2px var(--g1-accent);
+  color: #ffe7b0;
+}
+.tool__name {
+  font-size: 12.5px;
+  line-height: 1.1;
+  text-align: center;
+}
+.tool__badge {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--g1-accent);
+  color: var(--g1-accent-ink);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 19px;
+}
+.foot {
+  flex: none;
+  min-height: 72px;
+  padding: 8px 14px max(12px, var(--g1-inset-bottom));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.note {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(8, 10, 34, 0.6);
+  box-shadow: inset 0 0 0 1px var(--g1-line);
+  color: var(--g1-text);
+  font-size: 14px;
+  line-height: 1.35;
+  text-align: center;
+}
+.note--alert {
+  box-shadow: inset 0 0 0 1.5px rgba(255, 211, 110, 0.6);
+}
+
+/* ---------------------------------------------------------------------------------------
+   Jars and starlight */
+
+.jar {
+  --jar-line: rgba(220, 230, 255, 0.6);
+  --jar-tint: rgba(200, 215, 255, 0.08);
+  position: relative;
+  display: block;
+  width: 100%;
+  transition: transform 160ms ease;
+}
+.jar__neck {
+  display: block;
+  width: 64%;
+  height: 7px;
+  margin: 0 auto -2px;
+  border: 2px solid var(--jar-line);
+  border-bottom: 0;
+  border-radius: 4px 4px 0 0;
+  background: var(--jar-tint);
+}
+.jar__body {
+  display: block;
+  position: relative;
+  width: 100%;
+  padding-bottom: calc(var(--cap) * 56% + 10%);
+  border: 2px solid var(--jar-line);
+  border-radius: 9px 9px 22px 22px / 9px 9px 18px 18px;
+  background: var(--jar-tint);
+  overflow: hidden;
+  box-shadow: inset 0 -8px 16px rgba(0, 0, 0, 0.28), 0 6px 14px rgba(0, 0, 0, 0.35);
+  transition: box-shadow 200ms ease;
+}
+/* A streak of light on the glass. */
+.jar__body::after {
+  content: '';
+  position: absolute;
+  top: 6%;
+  bottom: 12%;
+  left: 12%;
+  width: 12%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0.04));
+  pointer-events: none;
+}
+.jar__fill {
+  position: absolute;
+  inset: 3px 3px 3px;
+  display: flex;
+  flex-direction: column-reverse;
+  border-radius: 0 0 16px 16px / 0 0 13px 13px;
+  overflow: hidden;
+}
+/* Each unit is 56% as tall as the jar is wide, and the jar keeps a little air above the last one. */
+.unit {
+  flex: 0 0 calc(100% * 56 / (56 * var(--cap) + 10));
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 34% 30%, var(--glow), var(--fill) 68%);
+  color: rgba(20, 16, 60, 0.62);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+/* The same colour twice runs together, with only a faint seam. */
+.unit--joined {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+.glyph {
+  width: 54%;
+  height: 54%;
+  max-width: 24px;
+}
+.unit--new {
+  animation: drop 300ms cubic-bezier(0.25, 0.8, 0.4, 1);
+}
+@keyframes drop {
+  from {
+    transform: translateY(-140%);
+    opacity: 0;
+  }
+}
+.jarbtn--lifted .jar {
+  transform: translateY(-14px);
+}
+.jarbtn--lifted .jar__body {
+  box-shadow: 0 0 0 3px rgba(255, 222, 140, 0.85), 0 14px 24px rgba(0, 0, 0, 0.45);
+}
+.jar--full .jar__body {
+  box-shadow: 0 0 18px 2px var(--full-glow), inset 0 0 12px rgba(255, 255, 255, 0.25);
+}
+.play--solved .jar--full .jar__body {
+  animation: glow 1.2s ease-in-out infinite;
+}
+@keyframes glow {
+  50% {
+    box-shadow: 0 0 28px 6px var(--full-glow), inset 0 0 16px rgba(255, 255, 255, 0.35);
+  }
+}
+
+/* Jar looks. */
+.jar--lantern {
+  --jar-line: #e9b95d;
+  --jar-tint: rgba(255, 196, 90, 0.12);
+}
+.jar--lantern .jar__neck {
+  width: 86%;
+  height: 8px;
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(180deg, #f5cf7c, #b9842c);
+}
+/* The lantern's ring, to carry it by. */
+.jar--lantern::before {
+  content: '';
+  display: block;
+  width: 32%;
+  height: 8px;
+  margin: 0 auto -1px;
+  border: 2px solid #e9b95d;
+  border-bottom: 0;
+  border-radius: 999px 999px 0 0;
+}
+.jar--lantern .jar__body {
+  border-radius: 6px 6px 10px 10px;
+  border-width: 2.5px;
+  box-shadow: inset 0 0 14px rgba(255, 196, 90, 0.25), 0 6px 14px rgba(0, 0, 0, 0.35);
+}
+.jar--lantern .jar__fill {
+  border-radius: 0 0 6px 6px;
+}
+.jar--shell {
+  --jar-line: #f5cde0;
+  --jar-tint: rgba(255, 226, 242, 0.1);
+}
+.jar--shell .jar__neck {
+  width: 74%;
+  height: 9px;
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  background: radial-gradient(circle at 50% 100%, rgba(255, 230, 245, 0.5), rgba(201, 230, 245, 0.2));
+}
+.jar--shell .jar__body {
+  border-radius: 18px 18px 32px 32px / 14px 14px 28px 28px;
+  background: linear-gradient(160deg, rgba(255, 220, 240, 0.12), rgba(190, 230, 255, 0.1));
+}
+.jar--shell .jar__fill {
+  border-radius: 0 0 26px 26px / 0 0 22px 22px;
+}
+.jar--crystal {
+  --jar-line: #a9e4ff;
+  --jar-tint: rgba(170, 220, 255, 0.08);
+}
+.jar--crystal .jar__neck {
+  width: 50%;
+  border-radius: 0;
+}
+.jar--crystal .jar__body {
+  border-radius: 3px 3px 12px 12px;
+  background: linear-gradient(115deg, rgba(170, 220, 255, 0.16) 0 30%, transparent 30% 55%, rgba(170, 220, 255, 0.1) 55% 70%, transparent 70%), var(--jar-tint);
+}
+.jar--crystal .jar__fill {
+  border-radius: 0 0 9px 9px;
+}
+
+/* ---------------------------------------------------------------------------------------
+   Pop-ups */
+
+.result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+.result p {
+  margin: 0;
+}
+.result__clean {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #ffe7b0;
+  font-weight: 700;
+  font-size: 14px;
+}
+.result__stardust {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 6px !important;
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff1c9;
+}
+.result__stardust .icon:last-child {
+  color: var(--g1-good);
+}
+.result__constellation {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 12px;
+  background: rgba(255, 211, 110, 0.12);
+  color: #ffe7b0;
+  font-weight: 700;
+}
+.sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+.sheet p {
+  margin: 0;
+}
+
+.atlas {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.atlas__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 6px 10px;
+  border-radius: 14px;
+  background: rgba(8, 10, 34, 0.45);
+  box-shadow: inset 0 0 0 1px var(--g1-line);
+  text-align: center;
+}
+.atlas__item--complete {
+  box-shadow: inset 0 0 0 1px var(--sj-gold-line);
+}
+.atlas__item--dark .figure {
+  opacity: 0.55;
+}
+.atlas__name {
+  font-family: var(--sj-title);
+  font-size: 15px;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+.atlas__lore {
+  margin-top: 2px;
+  color: var(--g1-text-dim);
+  font-style: italic;
+  line-height: 1.3;
+}
+
+.looks__heading {
+  margin: 14px 0 6px;
+  font-family: var(--sj-title);
+  font-size: 16px;
+}
+.looks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.look {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: rgba(8, 10, 34, 0.45);
+}
+.look--in-use {
+  box-shadow: inset 0 0 0 2px var(--g1-accent);
+}
+.look__preview {
+  flex: none;
+  width: 52px;
+  display: flex;
+  justify-content: center;
+}
+.look__preview .jar {
+  width: 28px;
+}
+.look__sky {
+  height: 40px;
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px var(--g1-line);
+}
+.look__name {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+}
+.looks__collection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--g1-line);
+}
+.looks__collection .g1-small {
+  flex: 1;
+}
+
+.offer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--g1-line);
+}
+.offer:first-of-type {
+  border-top: 0;
+}
+.offer__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.packs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 6px 0 4px;
+}
+.pack {
+  appearance: none;
+  border: 0;
+  padding: 10px 4px;
+  border-radius: 14px;
+  font: inherit;
+  color: var(--g1-text);
+  background: rgba(8, 10, 34, 0.5);
+  box-shadow: inset 0 0 0 1px var(--sj-gold-line);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+}
+.pack:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.pack__amount {
+  font-size: 14px;
+  font-weight: 700;
+}
+.pack__name {
+  margin-bottom: 4px;
+  color: var(--g1-text-dim);
+  text-align: center;
+  line-height: 1.15;
+}
+.pack__price {
+  /* At the bottom of every card, so the prices line up. */
+  margin-top: auto;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--g1-accent);
+  color: var(--g1-accent-ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .twinkle,
+  .aurora span,
+  .meteors span,
+  .jarbtn__mark,
+  .figure__star--flare,
+  .play--solved .jar--full .jar__body {
+    animation: none;
+  }
+  .unit--new,
+  .solved {
+    animation-duration: 1ms;
+  }
+  .jar {
+    transition: none;
+  }
+}

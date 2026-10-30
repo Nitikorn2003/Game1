@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Rice Field Art</string>
+    <string name="title_activity_main">Rice Field Art</string>
+    <string name="package_name">com.game1.ricefield</string>
+    <string name="custom_url_scheme">com.game1.ricefield</string>
+</resources>

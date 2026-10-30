@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node", "vite/client"]
+  },
+  "include": [
+    "packages/*/src",
+    "packages/*/test",
+    "games/*/src",
+    "games/*/test",
+    "games/*/e2e",
+    "games/*/store",
+    "games/*/*.ts",
+    "templates/*/src",
+    "templates/*/test",
+    "templates/*/e2e",
+    "templates/*/store",
+    "templates/*/*.ts",
+    "tools/**/*.ts",
+    "vitest.config.ts"
+  ]
+}

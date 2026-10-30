@@ -1,0 +1,16 @@
+# Copy this file to release.properties in the same folder. Git ignores release.properties:
+# never commit it, the upload key or its passwords. See ANDROID.md.
+
+# The app's id on Google Play. It can never change after the first upload, so pick it once,
+# for example com.<your studio>.lotuscanal. It must match packageName in the purchase server's
+# catalog and the package name of the Android app in Firebase.
+applicationId=com.game1.lotuscanal
+
+# Your AdMob app id (AdMob, Apps, App settings). Leave it out to keep Google's test app id.
+#admobAppId=ca-app-pub-0000000000000000~0000000000
+
+# The upload key that signs release builds. storeFile is relative to this folder or absolute.
+#storeFile=../../../../keys/lotuscanal-upload.jks
+#storePassword=
+#keyAlias=upload
+#keyPassword=

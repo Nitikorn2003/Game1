@@ -1,0 +1,29 @@
+.DS_Store
+Thumbs.db
+
+# Secrets never belong in this public repository.
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.jks
+*.keystore
+*service-account*.json
+*credentials*.json
+
+# Game workspaces (packages/, games/, tools/).
+node_modules/
+dist/
+dist-single/
+coverage/
+test-results/
+playwright-report/
+*.log
+# Store graphics and screenshots: tools/store-assets.ts makes them again.
+games/*/store/out/
+templates/*/store/out/
+# Per-game Firebase, AdMob and signing settings stay out of the public repo.
+google-services.json
+GoogleService-Info.plist
+release.properties

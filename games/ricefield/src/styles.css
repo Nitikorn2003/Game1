@@ -1,0 +1,1429 @@
+/* Rice Field Art: young rice, paddy water, golden grain and the brown mud of the dikes, under an
+   open sky. The only light theme of the games. */
+:root {
+  --g1-bg: #e9f3dc;
+  --g1-surface: #fffdf4;
+  --g1-surface-2: #eef5df;
+  --g1-line: rgba(46, 70, 30, 0.18);
+  --g1-text: #2c3a1f;
+  --g1-text-dim: #5d6b4e;
+  --g1-accent: #e8a42b;
+  --g1-accent-ink: #3a2500;
+  --g1-good: #3f8f3a;
+  --g1-bad: #c8463d;
+  --g1-gem: #3a8fd6;
+  --g1-ad: #c3a0f0;
+  --g1-font: 'Krub', 'Noto Sans Thai', 'Leelawadee UI', system-ui, sans-serif;
+  --g1-shadow: 0 4px 12px rgba(46, 70, 30, 0.18);
+  --g1-note-bg: rgba(232, 164, 43, 0.16);
+  --g1-note-text: #6b4300;
+  --g1-note-bad-bg: rgba(200, 70, 61, 0.12);
+  --g1-note-bad-text: #8f2a22;
+  --g1-field-bg: #ffffff;
+  --g1-bar-bg: rgba(46, 70, 30, 0.14);
+  --g1-bar-from: #7cc35b;
+  --g1-bar-to: #b9df6c;
+  --g1-toast-bg: rgba(44, 58, 31, 0.95);
+  --g1-toast-text: #fffdf4;
+  /* Titles are set in Itim, round and hand-lettered, like a sign at the edge of a field. */
+  --rf-title: 'Itim', 'Krub', 'Noto Sans Thai', sans-serif;
+  --rf-title-ink: #3a6b2a;
+  --rf-glass: rgba(255, 253, 244, 0.94);
+  /* A field: open water, young rice, and the mud dike around it. */
+  --rf-water: #cfe8ec;
+  --rf-water-2: #bcdde3;
+  --rf-rice: #bfe39a;
+  --rf-dike: #8a6a44;
+  --rf-grain: #8a5a0c;
+  color-scheme: light;
+}
+
+html {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: #e9f3dc;
+  overscroll-behavior: none;
+}
+body {
+  display: flex;
+  justify-content: center;
+}
+#app {
+  width: 100%;
+  max-width: 520px;
+  height: 100%;
+}
+.boot-error {
+  margin: 0;
+  padding: 40px 24px;
+  color: #2c3a1f;
+  font: 500 17px/1.5 'Krub', system-ui, sans-serif;
+  text-align: center;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  isolation: isolate;
+  box-shadow: 0 0 60px rgba(46, 70, 30, 0.22);
+}
+.home,
+.play {
+  position: relative;
+  z-index: 1;
+}
+.icon,
+.marker-art,
+.album-art {
+  flex: none;
+  vertical-align: middle;
+}
+
+/* The shared pieces, in the colours of the fields. */
+.g1-modal {
+  background: linear-gradient(180deg, #fffdf4, #f3f8e6);
+  box-shadow: 0 24px 60px rgba(30, 45, 20, 0.35), inset 0 0 0 1px var(--g1-line);
+}
+.g1-modal h2 {
+  font-family: var(--rf-title);
+  font-weight: 400;
+  font-size: 26px;
+  line-height: 1.25;
+  color: var(--rf-title-ink);
+}
+.g1-modal-backdrop {
+  background: rgba(26, 40, 18, 0.5);
+}
+.g1-btn:disabled {
+  filter: grayscale(0.6);
+  opacity: 0.55;
+}
+.g1-btn--ghost {
+  background: #fff;
+}
+
+/* ---------------------------------------------------------------------------------------
+   The hills behind everything */
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.backdrop,
+.swatch {
+  background: linear-gradient(180deg, var(--sky-1) 0%, var(--sky-2) 42%);
+}
+.backdrop--terraces {
+  --sky-1: #bfe6f5;
+  --sky-2: #eaf7e4;
+  --sun: #fff2a8;
+  --far: #a6d39c;
+  --t0: #8ccf6a;
+  --t1: #6fbf55;
+  --t2: #5aae49;
+  --t3: #4b9c3f;
+  --t4: #3f8a37;
+  --edge: rgba(40, 80, 30, 0.38);
+  --row: rgba(235, 255, 210, 0.32);
+}
+.backdrop--golden {
+  --sky-1: #ffd59a;
+  --sky-2: #ffeccf;
+  --sun: #fff6d8;
+  --far: #e7c98a;
+  --t0: #f2c14e;
+  --t1: #e6ad38;
+  --t2: #d89a2a;
+  --t3: #c98a22;
+  --t4: #b87a1c;
+  --edge: rgba(110, 66, 10, 0.4);
+  --row: rgba(255, 240, 190, 0.38);
+}
+.backdrop--misty {
+  --sky-1: #dfe7ea;
+  --sky-2: #f1f4f2;
+  --sun: #fbfbf2;
+  --far: #c3d4c4;
+  --t0: #a9c7a4;
+  --t1: #95b993;
+  --t2: #84ab84;
+  --t3: #739c76;
+  --t4: #658e69;
+  --edge: rgba(50, 80, 55, 0.3);
+  --row: rgba(240, 250, 240, 0.3);
+}
+.backdrop--snowy {
+  --sky-1: #d6e6f5;
+  --sky-2: #f4f8fc;
+  --sun: #ffffff;
+  --far: #e3ebf4;
+  --t0: #f4f7fb;
+  --t1: #e8eef6;
+  --t2: #dde6f1;
+  --t3: #d2ddeb;
+  --t4: #c6d4e4;
+  --edge: rgba(90, 115, 150, 0.35);
+  --row: rgba(150, 175, 205, 0.35);
+}
+.hills {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.hills__sun {
+  fill: var(--sun);
+}
+.hills__far {
+  fill: var(--far);
+}
+.terrace--0 .terrace__land {
+  fill: var(--t0);
+}
+.terrace--1 .terrace__land {
+  fill: var(--t1);
+}
+.terrace--2 .terrace__land {
+  fill: var(--t2);
+}
+.terrace--3 .terrace__land {
+  fill: var(--t3);
+}
+.terrace--4 .terrace__land {
+  fill: var(--t4);
+}
+.terrace__edge {
+  fill: none;
+  stroke: var(--edge);
+  stroke-width: 0.9;
+}
+/* Rows of rice plants along each terrace. */
+.terrace__row {
+  fill: none;
+  stroke: var(--row);
+  stroke-width: 0.7;
+  stroke-linecap: round;
+  stroke-dasharray: 0.1 2.2;
+}
+/* Morning mist: three soft banks drifting over the terraces. */
+.mist span {
+  position: absolute;
+  left: -30%;
+  width: 160%;
+  height: 18%;
+  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0) 70%);
+  animation: mist 26s ease-in-out infinite alternate;
+}
+.mist span:nth-child(1) {
+  top: 26%;
+}
+.mist span:nth-child(2) {
+  top: 47%;
+  animation-duration: 34s;
+  animation-delay: -9s;
+}
+.mist span:nth-child(3) {
+  top: 70%;
+  animation-duration: 41s;
+  animation-delay: -17s;
+}
+@keyframes mist {
+  from {
+    transform: translateX(-12%);
+  }
+  to {
+    transform: translateX(12%);
+  }
+}
+/* Snow: three layers of flakes on tiles of different sizes, so they never line up, falling at
+   different speeds. */
+.snow {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle, #fff 0 1.4px, rgba(140, 165, 200, 0.45) 1.9px, transparent 2.6px),
+    radial-gradient(circle, #fff 0 1px, rgba(140, 165, 200, 0.4) 1.4px, transparent 2px),
+    radial-gradient(circle, #fff 0 1.9px, rgba(140, 165, 200, 0.35) 2.4px, transparent 3.2px);
+  background-size:
+    43px 47px,
+    67px 59px,
+    89px 97px;
+  background-position:
+    0 0,
+    13px 7px,
+    31px 19px;
+  animation: snow 11s linear infinite;
+}
+@keyframes snow {
+  to {
+    background-position:
+      0 47px,
+      13px 125px,
+      31px 213px;
+  }
+}
+
+/* ---------------------------------------------------------------------------------------
+   Bars and shared bits */
+
+.topbar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: max(6px, var(--g1-inset-top)) 8px 8px;
+  background: rgba(255, 253, 244, 0.92);
+  border-bottom: 2px solid rgba(138, 106, 68, 0.35);
+  box-shadow: 0 3px 12px rgba(46, 70, 30, 0.12);
+}
+.brand {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 0 2px;
+  font-family: var(--rf-title);
+  font-size: 25px;
+  font-weight: 400;
+  line-height: 1.2;
+  white-space: nowrap;
+  color: var(--rf-title-ink);
+}
+.brand span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.topbar__title {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  line-height: 1.2;
+}
+.topbar__title > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  font-family: var(--rf-title);
+  font-size: 21px;
+  font-weight: 400;
+  color: var(--rf-title-ink);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.topbar__where {
+  overflow: hidden;
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--g1-text-dim);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.res {
+  appearance: none;
+  border: 0;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 40px;
+  padding: 3px 12px 3px 6px;
+  border-radius: 999px;
+  background: #fff4d6;
+  color: #5a3b00;
+  box-shadow: inset 0 0 0 1px rgba(184, 122, 28, 0.38);
+  font: inherit;
+  font-weight: 600;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.iconbtn {
+  appearance: none;
+  border: 0;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--g1-surface-2);
+  color: var(--g1-text);
+  box-shadow: inset 0 0 0 1px var(--g1-line);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.iconbtn:focus-visible,
+.res:focus-visible,
+.album-card:focus-visible,
+.hint-btn:focus-visible,
+.tile:focus-visible,
+.pack:focus-visible,
+.linkbtn:focus-visible {
+  outline: 3px solid var(--g1-gem);
+  outline-offset: 2px;
+}
+.card {
+  position: relative;
+  background: var(--rf-glass);
+  border-radius: 18px;
+  padding: 14px;
+  box-shadow: inset 0 0 0 1px var(--g1-line), 0 6px 18px rgba(46, 70, 30, 0.16);
+}
+.owned {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--g1-good);
+  font-weight: 600;
+  font-size: 14px;
+}
+.linkbtn {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: #2f6fae;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+/* ---------------------------------------------------------------------------------------
+   Home */
+
+.home {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.home__body {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 12px max(16px, var(--g1-inset-bottom));
+}
+.next-card,
+.mode {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.next-card h2,
+.mode h2 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-family: var(--rf-title);
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1.25;
+  color: var(--rf-title-ink);
+}
+.next-card p,
+.mode p {
+  margin: 0;
+  text-wrap: balance;
+}
+.next-card__body,
+.mode__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.next-card__actions,
+.mode__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+.next-card__field {
+  flex: none;
+  width: 76px;
+  height: 76px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: #e4f0cf;
+  box-shadow: inset 0 0 0 1px var(--g1-line);
+}
+.next-card__new {
+  width: 60px;
+  height: 60px;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  background: linear-gradient(160deg, var(--rf-water), var(--rf-water-2));
+  box-shadow: 0 0 0 3px var(--rf-dike);
+  font-family: var(--rf-title);
+  font-size: 34px;
+  color: #4f8796;
+}
+.mini-field {
+  display: block;
+  border-radius: 2px;
+  box-shadow: 0 0 0 3px var(--rf-dike);
+}
+.mini-field__water {
+  fill: var(--rf-water);
+}
+.mini-field__rice {
+  fill: #6fbf55;
+}
+.mode__badge {
+  flex: none;
+  width: 76px;
+  height: 76px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff8d6, #ffe38f 62%, #f6c955);
+  box-shadow: 0 0 0 5px rgba(255, 216, 110, 0.32);
+}
+.mode__streak {
+  color: var(--rf-grain);
+  font-weight: 600;
+  font-size: 14px;
+}
+.mode--done {
+  opacity: 0.88;
+}
+.mode--done .mode__badge {
+  filter: saturate(0.6);
+}
+/* A label on the hills, so it reads over any scene. */
+.home__heading {
+  align-self: flex-start;
+  margin: 4px 0 -2px;
+  padding: 1px 14px 3px;
+  border-radius: 999px;
+  background: var(--rf-glass);
+  box-shadow: inset 0 0 0 1px var(--g1-line);
+  font-family: var(--rf-title);
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--rf-title-ink);
+}
+.albums {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.album-card {
+  appearance: none;
+  border: 0;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 10px;
+  row-gap: 1px;
+  align-items: center;
+  padding: 10px 12px 12px;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.album-card__art {
+  grid-row: 1 / span 2;
+  position: relative;
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: #e4f0cf;
+}
+.album-card__lock {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #fffdf4;
+  color: #6b5a40;
+  box-shadow: 0 1px 3px rgba(46, 70, 30, 0.3);
+}
+.album-card__name {
+  grid-column: 2;
+  align-self: end;
+  font-family: var(--rf-title);
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--rf-title-ink);
+}
+.album-card__count {
+  grid-column: 2;
+  align-self: start;
+  line-height: 1.25;
+}
+.album-card__dots {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 3px;
+  margin-top: 8px;
+}
+.dot {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(46, 70, 30, 0.14);
+}
+.dot--grown {
+  background: #6fbf55;
+}
+.album-card--locked .album-art {
+  filter: grayscale(1);
+  opacity: 0.5;
+}
+.album-card--locked .album-card__name {
+  color: var(--g1-text-dim);
+}
+.album-card--done {
+  box-shadow: inset 0 0 0 2px var(--g1-accent), 0 6px 18px rgba(46, 70, 30, 0.16);
+}
+.home__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* ---------------------------------------------------------------------------------------
+   Play */
+
+.play {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.status {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px 0;
+}
+.hearts,
+.planted {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  background: var(--rf-glass);
+  box-shadow: inset 0 0 0 1px var(--g1-line);
+}
+.hearts {
+  gap: 3px;
+  padding: 4px 9px;
+}
+.heart {
+  display: inline-grid;
+}
+.heart--lost {
+  opacity: 0.6;
+}
+.heart--breaking {
+  animation: heart-break 520ms ease-out;
+}
+@keyframes heart-break {
+  0% {
+    transform: scale(1.35);
+  }
+  30% {
+    transform: scale(0.8) rotate(-14deg);
+  }
+  60% {
+    transform: rotate(10deg);
+  }
+}
+.planted {
+  gap: 5px;
+  padding: 4px 13px 4px 8px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+/* The room the field has. Its padding is room for the field's frame. */
+.space {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 12px;
+}
+.grown-banner {
+  position: absolute;
+  left: 50%;
+  top: 8px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 20px 8px 14px;
+  border-radius: 999px;
+  background: rgba(255, 253, 244, 0.96);
+  box-shadow: inset 0 0 0 2px var(--g1-accent), 0 8px 24px rgba(46, 70, 30, 0.3);
+  white-space: nowrap;
+  pointer-events: none;
+  translate: -50% 0;
+  animation: grown-in 600ms cubic-bezier(0.2, 1.4, 0.4, 1) 500ms both;
+}
+.grown-banner strong {
+  font-family: var(--rf-title);
+  font-size: 24px;
+  font-weight: 400;
+  color: var(--rf-title-ink);
+}
+@keyframes grown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.8);
+  }
+}
+
+/* ---------------------------------------------------------------------------------------
+   The field. Its sizes come from --cell (a cell), --clue (the numbers) and --step (the room
+   for one number), which the board works out for the space it has. */
+
+/* A sheet of paper for the clues, and the field on it inside its mud dike. The frame is drawn
+   with shadows, so it takes no room. */
+.board {
+  flex: none;
+  position: relative;
+  display: grid;
+  border-radius: 12px;
+  background: #fffdf4;
+  box-shadow: 0 0 0 9px #fffdf4, 0 10px 28px 9px rgba(46, 70, 30, 0.26);
+}
+.board__symbols {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+.board__corner {
+  grid-area: 1 / 1;
+}
+.clues--cols {
+  grid-area: 1 / 2;
+  display: flex;
+  align-items: stretch;
+}
+.clues--rows {
+  grid-area: 2 / 1;
+  display: flex;
+  flex-direction: column;
+}
+.clue {
+  display: flex;
+  align-items: center;
+  color: var(--g1-text);
+  font-size: var(--clue);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  transition: color 200ms ease;
+}
+.clues--cols .clue {
+  width: var(--cell);
+  flex-direction: column;
+  justify-content: flex-end;
+  padding-bottom: 4px;
+  border-radius: 8px 8px 0 0;
+}
+.clues--cols .clue span {
+  height: var(--step);
+  display: grid;
+  place-items: center;
+}
+.clues--rows .clue {
+  height: var(--cell);
+  justify-content: flex-end;
+  padding-right: 6px;
+  border-radius: 8px 0 0 8px;
+}
+.clues--rows .clue span {
+  min-width: var(--step);
+  text-align: center;
+}
+/* A fine line every five clues, along the thick lines of the field, to count by. */
+.clue {
+  position: relative;
+}
+.clue:nth-child(5n + 1):not(:first-child)::before {
+  content: '';
+  position: absolute;
+  background: rgba(138, 106, 68, 0.35);
+}
+.clues--cols .clue:nth-child(5n + 1):not(:first-child)::before {
+  left: 0;
+  top: 6px;
+  bottom: 0;
+  width: 1px;
+}
+.clues--rows .clue:nth-child(5n + 1):not(:first-child)::before {
+  top: 0;
+  left: 6px;
+  right: 0;
+  height: 1px;
+}
+.clue--done {
+  color: rgba(44, 58, 31, 0.32);
+}
+.clue--here {
+  background: rgba(255, 220, 120, 0.5);
+}
+.cells {
+  grid-area: 2 / 2;
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--cols), var(--cell));
+  grid-auto-rows: var(--cell);
+  background: var(--rf-water);
+  box-shadow: 0 0 0 3px var(--rf-dike);
+  touch-action: none;
+}
+.cell {
+  appearance: none;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  width: var(--cell);
+  height: var(--cell);
+  display: grid;
+  place-items: center;
+  background: var(--rf-water);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+.cell--open {
+  background: linear-gradient(160deg, #d8eef1 0%, var(--rf-water) 55%, var(--rf-water-2) 100%);
+}
+.cell--rice {
+  background: var(--rf-rice);
+}
+.cell--pebble {
+  background: #d3e9ec;
+}
+.cell:focus {
+  outline: none;
+}
+.cell:focus-visible {
+  z-index: 2;
+  outline: 3px solid var(--g1-gem);
+  outline-offset: -3px;
+}
+.cell__glyph {
+  width: 80%;
+  height: 80%;
+  pointer-events: none;
+  animation: sprout-in 240ms cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+.cell__glyph--marker {
+  width: 60%;
+  height: 60%;
+  animation-name: marker-in;
+}
+@keyframes sprout-in {
+  from {
+    opacity: 0;
+    transform: translateY(30%) scale(0.3);
+  }
+}
+@keyframes marker-in {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+/* A wrong move, put right: a small red cross in the corner of the cell. */
+.cell--wrong::after {
+  content: '';
+  position: absolute;
+  top: 7%;
+  right: 7%;
+  width: 30%;
+  height: 30%;
+  background:
+    linear-gradient(45deg, transparent 38%, var(--g1-bad) 38% 62%, transparent 62%),
+    linear-gradient(-45deg, transparent 38%, var(--g1-bad) 38% 62%, transparent 62%);
+  pointer-events: none;
+}
+.grid-lines {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  transition: opacity 500ms ease 200ms;
+}
+.grid-lines__thin {
+  fill: none;
+  stroke: rgba(55, 100, 110, 0.3);
+  stroke-width: 1;
+}
+.grid-lines__thick {
+  fill: none;
+  stroke: rgba(138, 106, 68, 0.75);
+  stroke-width: 2;
+}
+.grid-lines__edge {
+  fill: none;
+  stroke: none;
+}
+/* The row and the column of the cell last touched, to read their clues by. */
+.cross {
+  position: absolute;
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.3);
+  pointer-events: none;
+}
+.flash {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+  animation: flash 900ms ease-out forwards;
+}
+.flash--line {
+  background: rgba(255, 248, 200, 0.85);
+}
+.flash--hint {
+  background: rgba(255, 214, 102, 0.75);
+  box-shadow: 0 0 14px 3px rgba(255, 200, 80, 0.7);
+}
+.flash--wrong {
+  background: rgba(200, 70, 61, 0.55);
+}
+@keyframes flash {
+  0% {
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+/* Grown: the rice comes up in its colours, sweeping across from the top left. */
+.board--grown .cell {
+  background: var(--ink);
+  cursor: default;
+  transition: background-color 500ms ease var(--wave);
+}
+.board--grown .cell__glyph {
+  opacity: 0;
+  transform: scale(0.5);
+  transition:
+    opacity 300ms ease var(--wave),
+    transform 300ms ease var(--wave);
+}
+.board--grown .cell--wrong::after {
+  opacity: 0;
+}
+.board--grown .grid-lines {
+  opacity: 0;
+}
+.board--grown .clue {
+  color: rgba(44, 58, 31, 0.3);
+}
+.board--wilted .cells {
+  filter: saturate(0.45) brightness(0.97);
+}
+.board--wilted .cell {
+  cursor: default;
+}
+
+/* What a tap does, and the hint. */
+.dock {
+  flex: none;
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  padding: 6px 12px 0;
+}
+.dock .g1-seg {
+  flex: 1;
+  background: var(--rf-glass);
+}
+.dock .g1-seg__opt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 52px;
+  color: var(--g1-text);
+  font-size: 16px;
+  font-weight: 600;
+}
+.dock .g1-seg__opt[aria-checked='true'] {
+  background: linear-gradient(180deg, #ffd47e, var(--g1-accent));
+  color: var(--g1-accent-ink);
+  box-shadow: 0 2px 0 #b87a1c;
+}
+.hint-btn {
+  appearance: none;
+  border: 0;
+  flex: none;
+  position: relative;
+  width: 78px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border-radius: 14px;
+  background: var(--rf-glass);
+  color: var(--g1-text);
+  box-shadow: inset 0 0 0 1px var(--g1-line);
+  font: inherit;
+  cursor: pointer;
+}
+.hint-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.hint-btn__name {
+  font-size: 13px;
+  line-height: 1.1;
+}
+.hint-btn__badge {
+  position: absolute;
+  top: -7px;
+  right: -6px;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--g1-accent);
+  color: var(--g1-accent-ink);
+  box-shadow: 0 1px 3px rgba(46, 70, 30, 0.3);
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1;
+}
+.foot {
+  flex: none;
+  min-height: 80px;
+  padding: 8px 12px max(12px, var(--g1-inset-bottom));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.note {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--rf-glass);
+  box-shadow: inset 0 0 0 1px var(--g1-line);
+  color: var(--g1-text);
+  font-size: 13.5px;
+  line-height: 1.38;
+  text-align: center;
+  text-wrap: balance;
+}
+.note--alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff3ee;
+  box-shadow: inset 0 0 0 1.5px rgba(200, 70, 61, 0.5);
+  text-align: left;
+}
+.note--alert p {
+  flex: 1;
+  margin: 0;
+}
+.note--alert .g1-btn {
+  flex: none;
+}
+
+/* ---------------------------------------------------------------------------------------
+   Pop-ups */
+
+.result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+.result p {
+  margin: 0;
+}
+.result__picture {
+  margin: 4px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.result__picture figcaption {
+  font-family: var(--rf-title);
+  font-size: 20px;
+  color: var(--rf-title-ink);
+}
+.result__picture figcaption.g1-small {
+  font-family: var(--g1-font);
+  font-size: 12.5px;
+  color: var(--g1-text-dim);
+}
+.picture {
+  display: block;
+}
+/* A grown picture in its dike, as if seen from the hill above. */
+.picture--framed {
+  border-radius: 3px;
+  box-shadow: 0 0 0 4px var(--rf-dike), 0 0 0 7px #c9a46a, 0 10px 22px 4px rgba(46, 70, 30, 0.28);
+}
+.result__perfect {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--rf-grain);
+  font-weight: 600;
+  font-size: 14px;
+}
+.result__opened {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px 4px 6px;
+  border-radius: 999px;
+  background: var(--g1-note-bg);
+  color: var(--g1-note-text);
+  font-weight: 600;
+  font-size: 14px;
+}
+.tally {
+  width: 100%;
+  max-width: 300px;
+  margin: 4px 0 0;
+  padding: 6px 12px;
+  border-radius: 12px;
+  background: var(--g1-surface-2);
+}
+.tally:empty {
+  display: none;
+}
+.tally div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 3px 0;
+  font-size: 14px;
+}
+.tally dt {
+  color: var(--g1-text-dim);
+  text-align: left;
+}
+.tally dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.result__seeds {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 !important;
+  color: var(--rf-grain);
+  font-size: 24px;
+  font-weight: 700;
+}
+.result__seeds .icon:last-child {
+  color: var(--g1-good);
+}
+.sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+.sheet p {
+  margin: 0;
+}
+.sheet__or {
+  margin: 2px 0 !important;
+}
+
+.album__lore {
+  margin: 0 0 4px;
+  color: #4d5e3c;
+  font-style: italic;
+  text-wrap: balance;
+}
+.tiles {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.tile {
+  appearance: none;
+  border: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 4px 8px;
+  border-radius: 12px;
+  background: var(--g1-surface-2);
+  color: inherit;
+  box-shadow: inset 0 0 0 1px var(--g1-line);
+  font: inherit;
+  cursor: pointer;
+}
+.tile:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.tile__art {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+}
+.tile__new {
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border-radius: 2px;
+  background: linear-gradient(160deg, var(--rf-water), var(--rf-water-2));
+  box-shadow: 0 0 0 3px var(--rf-dike);
+  color: #4f8796;
+  font-family: var(--rf-title);
+  font-size: 28px;
+}
+.tile__name {
+  font-size: 12.5px;
+  line-height: 1.2;
+  text-align: center;
+  text-wrap: balance;
+}
+.tile--grown {
+  background: #fff7de;
+  box-shadow: inset 0 0 0 1.5px #e8c46a;
+}
+.tile--grown .picture {
+  border-radius: 2px;
+  box-shadow: 0 0 0 2px var(--rf-dike);
+}
+.tile--started {
+  box-shadow: inset 0 0 0 1.5px #7cc35b;
+}
+
+.rules {
+  margin: 0;
+  padding: 0 0 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 14.5px;
+  line-height: 1.45;
+}
+.rules__row {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  margin-top: 8px;
+}
+.rules__clue {
+  min-width: 46px;
+  padding-right: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: right;
+}
+.rules__cell {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  background: var(--rf-water);
+  box-shadow: inset 0 0 0 0.5px rgba(55, 100, 110, 0.45);
+}
+.rules__cell--rice {
+  background: var(--rf-rice);
+}
+
+.looks__heading {
+  margin: 14px 0 6px;
+  font-family: var(--rf-title);
+  font-size: 19px;
+  font-weight: 400;
+  color: var(--rf-title-ink);
+}
+.looks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.look {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: var(--g1-surface-2);
+}
+.look--in-use {
+  box-shadow: inset 0 0 0 2px var(--g1-accent);
+}
+.look__preview {
+  flex: none;
+  position: relative;
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 12px;
+}
+.look__marker {
+  background: var(--rf-water);
+  box-shadow: inset 0 0 0 1px rgba(55, 100, 110, 0.3);
+}
+.swatch {
+  box-shadow: inset 0 0 0 1px var(--g1-line);
+}
+.swatch .mist span {
+  height: 30%;
+}
+.look__name {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+}
+.looks__collection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--g1-line);
+}
+.looks__collection .g1-small {
+  flex: 1;
+}
+
+.offer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--g1-line);
+}
+.offer:first-of-type {
+  border-top: 0;
+}
+.offer__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.packs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 6px 0 4px;
+}
+.pack {
+  appearance: none;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 4px;
+  border-radius: 14px;
+  background: #fff7de;
+  color: var(--g1-text);
+  box-shadow: inset 0 0 0 1px rgba(184, 122, 28, 0.35);
+  font: inherit;
+  cursor: pointer;
+}
+.pack:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.pack__amount {
+  font-size: 14px;
+  font-weight: 700;
+}
+.pack__name {
+  margin-bottom: 4px;
+  color: var(--g1-text-dim);
+  line-height: 1.15;
+  text-align: center;
+}
+.pack__price {
+  /* At the bottom of every card, so the prices line up. */
+  margin-top: auto;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--g1-accent);
+  color: var(--g1-accent-ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mist span,
+  .snow {
+    animation: none;
+  }
+  .board--grown .cell,
+  .board--grown .cell__glyph,
+  .board--grown .grid-lines {
+    transition-delay: 0ms;
+  }
+}

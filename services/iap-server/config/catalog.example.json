@@ -1,0 +1,432 @@
+{
+  "games": [
+    {
+      "gameId": "game1",
+      "packageName": "com.example.game1",
+      "products": [
+        {
+          "productId": "gems_100",
+          "type": "consumable",
+          "grants": {
+            "gems": 100
+          }
+        },
+        {
+          "productId": "gems_550",
+          "type": "consumable",
+          "grants": {
+            "gems": 550
+          }
+        },
+        {
+          "productId": "starter_pack",
+          "type": "consumable",
+          "grants": {
+            "gems": 500,
+            "coins": 1000
+          }
+        },
+        {
+          "productId": "remove_ads",
+          "type": "non_consumable",
+          "entitlement": "remove_ads"
+        }
+      ]
+    },
+    {
+      "gameId": "lodelings",
+      "packageName": "com.example.lodelings",
+      "products": [
+        {
+          "productId": "gems_small",
+          "type": "consumable",
+          "grants": {
+            "gems": 100
+          }
+        },
+        {
+          "productId": "gems_medium",
+          "type": "consumable",
+          "grants": {
+            "gems": 550
+          }
+        },
+        {
+          "productId": "gems_large",
+          "type": "consumable",
+          "grants": {
+            "gems": 1200
+          }
+        },
+        {
+          "productId": "gems_huge",
+          "type": "consumable",
+          "grants": {
+            "gems": 2600
+          }
+        },
+        {
+          "productId": "starter_pack",
+          "type": "non_consumable",
+          "entitlement": "starter_pack",
+          "grants": {
+            "gems": 300,
+            "egg_prism": 1
+          }
+        },
+        {
+          "productId": "remove_ads",
+          "type": "non_consumable",
+          "entitlement": "remove_ads"
+        },
+        {
+          "productId": "ore_doubler",
+          "type": "non_consumable",
+          "entitlement": "ore_doubler"
+        }
+      ]
+    },
+    {
+      "gameId": "starter",
+      "packageName": "com.example.starter",
+      "products": [
+        {
+          "productId": "coins_small",
+          "type": "consumable",
+          "grants": {
+            "coins": 500
+          }
+        },
+        {
+          "productId": "remove_ads",
+          "type": "non_consumable",
+          "entitlement": "remove_ads"
+        }
+      ]
+    },
+    {
+      "gameId": "quiltnook",
+      "packageName": "com.example.quiltnook",
+      "products": [
+        {
+          "productId": "spools_small",
+          "type": "consumable",
+          "grants": {
+            "spools": 60
+          }
+        },
+        {
+          "productId": "spools_medium",
+          "type": "consumable",
+          "grants": {
+            "spools": 350
+          }
+        },
+        {
+          "productId": "spools_large",
+          "type": "consumable",
+          "grants": {
+            "spools": 800
+          }
+        },
+        {
+          "productId": "sewing_kit",
+          "type": "non_consumable",
+          "grants": {
+            "spools": 200
+          },
+          "entitlement": "sewing_kit"
+        },
+        {
+          "productId": "remove_ads",
+          "type": "non_consumable",
+          "entitlement": "remove_ads"
+        },
+        {
+          "productId": "fabric_chest",
+          "type": "non_consumable",
+          "entitlement": "fabric_chest"
+        }
+      ]
+    },
+    {
+      "gameId": "skyjars",
+      "packageName": "com.example.skyjars",
+      "products": [
+        {
+          "productId": "stardust_small",
+          "type": "consumable",
+          "grants": {
+            "stardust": 100
+          }
+        },
+        {
+          "productId": "stardust_medium",
+          "type": "consumable",
+          "grants": {
+            "stardust": 600
+          }
+        },
+        {
+          "productId": "stardust_large",
+          "type": "consumable",
+          "grants": {
+            "stardust": 1400
+          }
+        },
+        {
+          "productId": "night_kit",
+          "type": "non_consumable",
+          "grants": {
+            "stardust": 300
+          },
+          "entitlement": "night_kit"
+        },
+        {
+          "productId": "remove_ads",
+          "type": "non_consumable",
+          "entitlement": "remove_ads"
+        },
+        {
+          "productId": "sky_collection",
+          "type": "non_consumable",
+          "entitlement": "sky_collection"
+        }
+      ]
+    },
+    {
+      "gameId": "lotuscanal",
+      "packageName": "com.example.lotuscanal",
+      "products": [
+        {
+          "productId": "coins_small",
+          "type": "consumable",
+          "grants": {
+            "coins": 500
+          }
+        },
+        {
+          "productId": "coins_medium",
+          "type": "consumable",
+          "grants": {
+            "coins": 3000
+          }
+        },
+        {
+          "productId": "coins_large",
+          "type": "consumable",
+          "grants": {
+            "coins": 7000
+          }
+        },
+        {
+          "productId": "market_kit",
+          "type": "non_consumable",
+          "grants": {
+            "coins": 1000
+          },
+          "entitlement": "market_kit"
+        },
+        {
+          "productId": "remove_ads",
+          "type": "non_consumable",
+          "entitlement": "remove_ads"
+        },
+        {
+          "productId": "canal_collection",
+          "type": "non_consumable",
+          "entitlement": "canal_collection"
+        }
+      ]
+    },
+    {
+      "gameId": "ricefield",
+      "packageName": "com.example.ricefield",
+      "products": [
+        {
+          "productId": "seeds_small",
+          "type": "consumable",
+          "grants": {
+            "seeds": 500
+          }
+        },
+        {
+          "productId": "seeds_medium",
+          "type": "consumable",
+          "grants": {
+            "seeds": 3000
+          }
+        },
+        {
+          "productId": "seeds_large",
+          "type": "consumable",
+          "grants": {
+            "seeds": 7000
+          }
+        },
+        {
+          "productId": "farmer_kit",
+          "type": "non_consumable",
+          "grants": {
+            "seeds": 1000
+          },
+          "entitlement": "farmer_kit"
+        },
+        {
+          "productId": "remove_ads",
+          "type": "non_consumable",
+          "entitlement": "remove_ads"
+        },
+        {
+          "productId": "field_collection",
+          "type": "non_consumable",
+          "entitlement": "field_collection"
+        }
+      ]
+    },
+    {
+      "gameId": "tidegarden",
+      "packageName": "com.example.tidegarden",
+      "products": [
+        {
+          "productId": "coins_small",
+          "type": "consumable",
+          "grants": {
+            "coins": 500
+          }
+        },
+        {
+          "productId": "coins_medium",
+          "type": "consumable",
+          "grants": {
+            "coins": 3000
+          }
+        },
+        {
+          "productId": "coins_large",
+          "type": "consumable",
+          "grants": {
+            "coins": 7000
+          }
+        },
+        {
+          "productId": "diver_kit",
+          "type": "non_consumable",
+          "grants": {
+            "coins": 1000,
+            "claw": 5,
+            "tide": 5,
+            "crab": 5
+          },
+          "entitlement": "diver_kit"
+        },
+        {
+          "productId": "remove_ads",
+          "type": "non_consumable",
+          "entitlement": "remove_ads"
+        },
+        {
+          "productId": "reef_collection",
+          "type": "non_consumable",
+          "entitlement": "reef_collection"
+        }
+      ]
+    },
+    {
+      "gameId": "bloomhive",
+      "packageName": "com.example.bloomhive",
+      "products": [
+        {
+          "productId": "coins_small",
+          "type": "consumable",
+          "grants": {
+            "coins": 500
+          }
+        },
+        {
+          "productId": "coins_medium",
+          "type": "consumable",
+          "grants": {
+            "coins": 3000
+          }
+        },
+        {
+          "productId": "coins_large",
+          "type": "consumable",
+          "grants": {
+            "coins": 7000
+          }
+        },
+        {
+          "productId": "keeper_kit",
+          "type": "non_consumable",
+          "grants": {
+            "coins": 1000,
+            "rainbow": 5,
+            "bomb": 5,
+            "sunbeam": 5
+          },
+          "entitlement": "keeper_kit"
+        },
+        {
+          "productId": "remove_ads",
+          "type": "non_consumable",
+          "entitlement": "remove_ads"
+        },
+        {
+          "productId": "meadow_collection",
+          "type": "non_consumable",
+          "entitlement": "meadow_collection"
+        }
+      ]
+    },
+    {
+      "gameId": "crumblane",
+      "packageName": "com.example.crumblane",
+      "products": [
+        {
+          "productId": "coins_small",
+          "type": "consumable",
+          "grants": {
+            "coins": 500
+          }
+        },
+        {
+          "productId": "coins_medium",
+          "type": "consumable",
+          "grants": {
+            "coins": 3000
+          }
+        },
+        {
+          "productId": "coins_large",
+          "type": "consumable",
+          "grants": {
+            "coins": 7000
+          }
+        },
+        {
+          "productId": "baker_kit",
+          "type": "non_consumable",
+          "grants": {
+            "coins": 1000,
+            "spatula": 5,
+            "rollingpin": 5,
+            "whisk": 5
+          },
+          "entitlement": "baker_kit"
+        },
+        {
+          "productId": "remove_ads",
+          "type": "non_consumable",
+          "entitlement": "remove_ads"
+        },
+        {
+          "productId": "lane_collection",
+          "type": "non_consumable",
+          "entitlement": "lane_collection"
+        }
+      ]
+    }
+  ]
+}
