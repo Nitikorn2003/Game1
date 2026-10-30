@@ -379,6 +379,54 @@
           "entitlement": "meadow_collection"
         }
       ]
+    },
+    {
+      "gameId": "crumblane",
+      "packageName": "com.example.crumblane",
+      "products": [
+        {
+          "productId": "coins_small",
+          "type": "consumable",
+          "grants": {
+            "coins": 500
+          }
+        },
+        {
+          "productId": "coins_medium",
+          "type": "consumable",
+          "grants": {
+            "coins": 3000
+          }
+        },
+        {
+          "productId": "coins_large",
+          "type": "consumable",
+          "grants": {
+            "coins": 7000
+          }
+        },
+        {
+          "productId": "baker_kit",
+          "type": "non_consumable",
+          "grants": {
+            "coins": 1000,
+            "spatula": 5,
+            "rollingpin": 5,
+            "whisk": 5
+          },
+          "entitlement": "baker_kit"
+        },
+        {
+          "productId": "remove_ads",
+          "type": "non_consumable",
+          "entitlement": "remove_ads"
+        },
+        {
+          "productId": "lane_collection",
+          "type": "non_consumable",
+          "entitlement": "lane_collection"
+        }
+      ]
     }
   ]
 }
