@@ -61,7 +61,8 @@ package, the save format, the storage prefix and the store text. It gives the ga
 port for the play tests and adds it to the purchase server's example catalog. The copy builds
 and passes the template's tests before anything else changes. [Quilt Nook](../games/quiltnook),
 [Sky Jars](../games/skyjars), [Lotus Canal](../games/lotuscanal),
-[Rice Field Art](../games/ricefield) and [Tide Garden](../games/tidegarden) started this way.
+[Rice Field Art](../games/ricefield), [Tide Garden](../games/tidegarden) and
+[Bloom Hive](../games/bloomhive) started this way.
 
 Then make it the new game, in this order:
 

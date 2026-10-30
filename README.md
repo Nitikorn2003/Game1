@@ -11,6 +11,7 @@ purchases verified on a server.
 | [`games/lotuscanal`](games/lotuscanal) | **Lotus Canal**, a peaks solitaire card game on a boat trip through a floating market: play face-up cards one rank higher or lower than the open card, with runs that pay bonus coins, undo, a lotus wild and five more cards when a deal gets hard. Every cleared level takes the boat one stop along twelve canals, each ending in a postcard; a daily deal keeps a streak, and coins buy card backs and scenes. Every deal can be cleared. English and Thai. Made from the starter template. [Android build](games/lotuscanal/ANDROID.md), [Google Play release](games/lotuscanal/RELEASE.md). |
 | [`games/ricefield`](games/ricefield) | **Rice Field Art**, a picture logic puzzle (nonogram) set in the rice fields: read the numbers along each row and column, plant rice where it must go and pebble the cells that stay empty, tap by tap or by dragging along a line, and watch the picture grow in colour. 72 hand-made pictures in six albums, from 5 by 5 to 12 by 12, each one proven to need no guessing; three hearts per field, a free hint per field, and a daily pattern with a streak. Seeds buy scenes and markers. English and Thai. Made from the starter template. [Android build](games/ricefield/ANDROID.md), [Google Play release](games/ricefield/RELEASE.md). |
 | [`games/tidegarden`](games/tidegarden) | **Tide Garden**, a match-three puzzle on a coral reef: swap pieces side by side to line up three or more, make waves, bubble bombs and pearls and swap them together for bigger splashes, wash away sand, cut pieces free of kelp, crack rocks and help baby turtles crawl down to the sea. 96 levels in eight zones, each bringing a sea creature home, then the open sea; three tools that take no move, five more moves when a dive runs out, and a daily dive with a streak. Every kind of piece has its own shape as well as its colour. Sand dollars buy tools, waters and buddies. English and Thai. Made from the starter template. [Android build](games/tidegarden/ANDROID.md), [Google Play release](games/tidegarden/RELEASE.md). |
+| [`games/bloomhive`](games/bloomhive) | **Bloom Hive**, a bubble shooter in a flower meadow: Pip the bee aims pollen up at the buds hanging from a branch, with a dotted line that shows where it will stick and shots that bounce off the sides. Three or more of one colour pop and whatever hangs from them falls, freeing the baby bees inside; wax, honey, dandelion puffs and butterflies join zone by zone. 96 levels in eight zones, each making a flower bloom in Pip's garden, then the wild meadow; a nectar jar that fills into a bomb, three tools that take no pollen, five more pollen when a round runs out, and a daily meadow with a streak. Every colour of bud has its own mark. Honey buys tools, skies and hats. English and Thai. Made from the starter template. [Android build](games/bloomhive/ANDROID.md), [Google Play release](games/bloomhive/RELEASE.md). |
 | [`templates/starter`](templates/starter) | **Starter**, the smallest complete game (tap a coin, buy upgrades, a rewarded ad, two products), with its Android project, store files and tests. `tools/new-game.ts` copies it to start a new game: see [the framework](docs/FRAMEWORK.md). |
 | [`packages/engine`](packages/engine) | Game-agnostic core: fixed-step loop, clocks, versioned saves with checksums, seeded random numbers, economy math, number formatting, daily resets, i18n. |
 | [`packages/platform`](packages/platform) | Device services behind small interfaces: storage, ads (test ads, AdMob with Google's consent form), purchases (test store, Google Play through the purchase server), sign-in (Firebase), cloud saves, haptics. |
@@ -40,6 +41,7 @@ npm run dev -w games/skyjars
 npm run dev -w games/lotuscanal
 npm run dev -w games/ricefield
 npm run dev -w games/tidegarden
+npm run dev -w games/bloomhive
 npm run typecheck && npm run lint
 npm test                            # unit tests of the framework and the games
 npm run build && npm run e2e        # builds, then plays each game in a phone-sized browser
@@ -67,6 +69,7 @@ npm run android:apk -w games/skyjars
 npm run android:apk -w games/lotuscanal
 npm run android:apk -w games/ricefield
 npm run android:apk -w games/tidegarden
+npm run android:apk -w games/bloomhive
 ```
 
 CI runs all of these on every pull request.

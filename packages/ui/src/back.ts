@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'preact/hooks';
+import { useLayoutEffect, useRef } from 'preact/hooks';
 
 /** Returns true when it handled the back press. */
 export type BackHandler = () => boolean;
@@ -27,11 +27,12 @@ export function pushBackHandler(handler: BackHandler): () => void {
 /** While the component is mounted, the back button calls `handler` first. */
 export function useBackHandler(handler: BackHandler): void {
   const latestRef = useRef(handler);
-  useEffect(() => {
+  useLayoutEffect(() => {
     latestRef.current = handler;
   });
-  // Registered once, so a screen that re-renders keeps its place under the ones opened after it.
-  useEffect(() => pushBackHandler(() => latestRef.current()), []);
+  // Registered once, so a screen that re-renders keeps its place under the ones opened after it;
+  // and as soon as it is on the screen, so a press that comes before the next paint is its own.
+  useLayoutEffect(() => pushBackHandler(() => latestRef.current()), []);
 }
 
 /** Escape works like the back button, for keyboards. Call the result to stop. */
